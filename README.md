@@ -1,8 +1,8 @@
 # My bash startup files
 
-Can't believe it took me so long to do this.
+Can't believe it took me so long to put these in git. All I had to do was move them out of $HOME.
 
-~/.bash_profile now:
+My `.bash_profile` now:
 
 ```
 source ~/src/bash/main
