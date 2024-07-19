@@ -1,18 +1,23 @@
-# I've installed GNU date as "gdate" on the Mac and use it in the prompt.
+#!/bin/bash
+# Note: the hash-bang above was only added so that my IDE knows this is a bash script. But this script must be
+# sourced, not executed from the command line.
+
+# I've installed GNU date as "gdate" on the Mac and use it in the prompt. On WSL, "date" is already GNU date.
 command -v gdate >& /dev/null || alias gdate=date
 
-# Edit and then re-source .bashrc:
-alias virc='\vi ~/.bashrc; . ~/.bashrc; backup_bash_files'
-# Edit and then re-source the aliases:
-alias vialiases='\vi ~/.aliases; . ~/.aliases; backup_bash_files'
-alias via='vialiases' # short form
-# Edit and then re-source the functions:
-alias vifunctions='\vi ~/.functions; . ~/.functions; backup_bash_files'
-alias vifu='vifunctions' # short form
+## Edit and then re-source .bashrc:
+#alias virc='\vi ~/.bashrc; . ~/.bashrc; backup_bash_files'
+## Edit and then re-source the aliases:
+#alias vialiases='\vi ~/.aliases; . ~/.aliases; backup_bash_files'
+#alias via='vialiases' # short form
+## Edit and then re-source the functions:
+#alias vifunctions='\vi ~/.functions; . ~/.functions; backup_bash_files'
+#alias vifu='vifunctions' # short form
+alias resource='source ~/.bash_profile'
 
 # Use my "mycd" function instead of the cd command:
 alias cd='mycd'
-
+# Ditto for vi
 alias vi='myvi'
 
 # ls aliases
@@ -50,7 +55,7 @@ alias en='echo -n'
 # Convenient short form of the find command
 alias fnd='find . -name '
 # Show all processes owned by me
-alias pu="ps -fU $UID"
+alias pu='ps -fU $UID'
 # Shutdown now
 alias s0="sudo shutdown -h now"
 # Shutdown and restart
@@ -94,9 +99,8 @@ if is_mac; then
 elif is_wsl; then
   icloud_dir="/mnt/c/Users/jafischer/iCloudDrive"
 fi
-#alias cdjnl="pushd ${icloud_dir}/Documents/misc/jnl"
-alias cdjnl="pushd ${HOME}/OneDrive/Documents/jnl"
-alias cdicloud="pushd '${icloud_dir}'"
+alias cdjnl='pushd ~/OneDrive/Documents/jnl'
+alias cdicloud='pushd ${icloud_dir}'
 
 # sk8s aliases
 alias s='/Users/jafischer/src/sk8s/target/debug/sk8s'

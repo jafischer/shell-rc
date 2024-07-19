@@ -1,18 +1,11 @@
-backup_bash_files() {
-  local bash_files=$(echo ~/.bashrc ~/.bash_history ~/.completion* ~/.aliases ~/.functions)
-  local path=~/OneDrive/Documents/macstuff
-  is_wsl && path=~/OneDrive/Documents/WSL
-  zip -jD $path/bash-$(date $* "+%Y%m") $bash_files
-  cp $bash_files $path/
-}
+#!/bin/bash
+# Note: the hash-bang above was only added so that my IDE knows this is a bash script. But this script must be
+# sourced, not executed from the command line.
 
 is_absolute_path() {
   local path="$1"
   [[ "${path:0:1}" == "/" ]] || [[ "${path:0:1}" == "~" ]]
 }
-
-src=~/src
-is_wsl && src=/mnt/c/Users/jafischer/src
 
 # Find a directory using various heuristics
 choosedir() {
@@ -30,26 +23,26 @@ choosedir() {
 
   # Check list of shortcuts for some frequent destinations:
   case $dir in
-    en)         echo "$src/kamaji-eliot-ness"; return 0 ;;
-    ga)         echo "$src/kamaji-garbo"; return 0 ;;
-    gc)         echo "$src/garbo-cpp"; return 0 ;;
-    cap)        echo "$src/capone"; return 0 ;;
-    crc)        echo "$src/capone-report-collector"; return 0 ;;
-    crp)        echo "$src/capone-report-processor"; return 0 ;;
-    ccs)        echo "$src/capone-content-store"; return 0 ;;
-    cc)         echo "$src/capone-cron"; return 0 ;;
-    sp)         echo "$src/speakeasy2"; return 0 ;;
-    sc)         echo "$src/safety-commons"; return 0 ;;
-    ss)         echo "$src/safety-scripts"; return 0 ;;
-    lf)         echo "$src/lego-framework"; return 0 ;;
-    3)          echo "$src/../3rdparty"; return 0 ;;
-    p)          echo "$src/pickford"; return 0 ;;
-    pf)         echo "$src/pathfinder"; return 0 ;;
-    prof)       echo "$src/pathfinder/sdk/target/samples/sample_code/playstation_network/api_webapi_profanity"; return 0 ;;
+    en)         echo "$MY_SRC_DIR/kamaji-eliot-ness"; return 0 ;;
+    ga)         echo "$MY_SRC_DIR/kamaji-garbo"; return 0 ;;
+    gc)         echo "$MY_SRC_DIR/garbo-cpp"; return 0 ;;
+    cap)        echo "$MY_SRC_DIR/capone"; return 0 ;;
+    crc)        echo "$MY_SRC_DIR/capone-report-collector"; return 0 ;;
+    crp)        echo "$MY_SRC_DIR/capone-report-processor"; return 0 ;;
+    ccs)        echo "$MY_SRC_DIR/capone-content-store"; return 0 ;;
+    cc)         echo "$MY_SRC_DIR/capone-cron"; return 0 ;;
+    sp)         echo "$MY_SRC_DIR/speakeasy2"; return 0 ;;
+    sc)         echo "$MY_SRC_DIR/safety-commons"; return 0 ;;
+    ss)         echo "$MY_SRC_DIR/safety-scripts"; return 0 ;;
+    lf)         echo "$MY_SRC_DIR/lego-framework"; return 0 ;;
+    3)          echo "$MY_SRC_DIR/../3rdparty"; return 0 ;;
+    p)          echo "$MY_SRC_DIR/pickford"; return 0 ;;
+    pf)         echo "$MY_SRC_DIR/pathfinder"; return 0 ;;
+    prof)       echo "$MY_SRC_DIR/pathfinder/sdk/target/samples/sample_code/playstation_network/api_webapi_profanity"; return 0 ;;
     dl)         echo ~/Downloads; return 0 ;;
     v)          echo ~/Library/Mobile\ Documents/com~apple~CloudDocs/voroncfg; return 0 ;;
-    m)          echo "$src/meccano"; return 0 ;;
-    gb)         echo "$src/gatsby"; return 0 ;;
+    m)          echo "$MY_SRC_DIR/meccano"; return 0 ;;
+    gb)         echo "$MY_SRC_DIR/gatsby"; return 0 ;;
   esac
 
   # Search for the directory in $CDPATH.
@@ -73,13 +66,16 @@ choosedir() {
 
     for local_dir in $local_dirs; do
       echo "$local_dir" | grep "$regex" >& /dev/null
+      # shellcheck disable=SC2181
       if [[ $? == 0 ]]; then
         expanded_dir="$(eval echo ${path_dir}/$local_dir)"
         echo "$expanded_dir"
+        # shellcheck disable=SC2164
         popd >& /dev/null
         return 0
       fi
     done
+    # shellcheck disable=SC2164
     popd >& /dev/null
   done
 
@@ -88,13 +84,14 @@ choosedir() {
 }
 
 mycd() {
+  # shellcheck disable=SC2164
   \cd "$(choosedir "$1")"
 }
 
 launch_ide() {
   local ide="$1" dir="$2"
 
-  ( $ide "$(choosedir "$dir" "$src")" >&/dev/null & sleep 7; layout )
+  ( $ide "$(choosedir "$dir")" >&/dev/null & sleep 7; layout )
 }
 
 # ij for IntelliJ
@@ -125,10 +122,10 @@ gogo() {
 myvi() {
   is_mac && mvim "$@" && return
 
-  local args="$@" fixedargs
+  local fixedargs
 
   # Since gvim.exe is a Windows exe, need to convert any linux paths to \\wsl$\Ubuntu-18.04\...
-  for arg in $args; do
+  for arg in "$@"; do
     if [[ -n $(readlink "$arg") ]]; then
       arg=$(readlink "$arg")
     fi
@@ -164,7 +161,7 @@ ip() {
 }
 
 log() {
-  echo -e `date +%T` $*
+  echo -e "$(date +%T)" "$@"
 }
 
 # Since 'in' is a keyword, using 'inn'.
@@ -183,8 +180,10 @@ inn() {
 
     echo -e "\x1b[1;44;33mDir: $dir\tCmd: " "$@" "$NC"
 
+    # shellcheck disable=SC2294
     eval "$@" || echo -e "${RED}Command failed in $dir$NC"
 
+    # shellcheck disable=SC2164
     popd >/dev/null
   done
 }
@@ -210,7 +209,7 @@ h() {
     shift
   fi
 
-  history $count $*
+  history $count "$@"
 }
 
 hgrep() {
@@ -223,12 +222,14 @@ get_aloypw() {
 
 tunnel-garbo-e1() {
   get_aloypw
+  # shellcheck disable=SC2154
   ssh -L 4306:kmj-garbo-e1-np.cluster-cfb7xbwcpaob.us-west-2.rds.amazonaws.com:3306 jafischer@$e1_bastion -fN || echo ssh failed
   echo "e1 MySql port is 4306"
 }
 
 tunnel-garbo-p1() {
   get_aloypw
+  # shellcheck disable=SC2154
   ssh -L 5306:kmj-garbo-p1-np.cluster-ctui8sdcnnfo.us-west-2.rds.amazonaws.com:3306 jafischer@$p1_bastion -fN || echo ssh failed
   echo "p1 MySql port is 5306"
 }
@@ -263,8 +264,8 @@ slog() {
 }
 
 clone-sie() {
-  cd ~/src
-  git clone git@github.sie.sony.com:SIE/$1.git "${@:2}"
+  cd $MY_SRC_DIR &&
+    git clone git@github.sie.sony.com:SIE/$1.git "${@:2}"
 }
 
 # Switch between JDK versions
@@ -338,6 +339,7 @@ elif is_wsl; then
       p=${p/\/mnt\/?/}
     else
       # In case ~ is not expanded:
+      # shellcheck disable=SC2088
       if [[ "$p" == "~/"* ]]; then
         p="$HOME${p/~/}"
       fi

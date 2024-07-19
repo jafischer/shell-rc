@@ -1,3 +1,7 @@
+#!/bin/bash
+# Note: the hash-bang above was only added so that my IDE knows this is a bash script. But this script must be
+# sourced, not executed from the command line.
+
 # bash completion for helm                                 -*- shell-script -*-
 
 __helm_debug()
