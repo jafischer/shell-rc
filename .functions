@@ -1,0 +1,372 @@
+backup_bash_files() {
+  local bash_files=$(echo ~/.bashrc ~/.bash_history ~/.completion* ~/.aliases ~/.functions)
+  local path=~/OneDrive/Documents/macstuff
+  is_wsl && path=~/OneDrive/Documents/WSL
+  zip -jD $path/bash-$(date $* "+%Y%m") $bash_files
+  cp $bash_files $path/
+}
+
+is_absolute_path() {
+  local path="$1"
+  [[ "${path:0:1}" == "/" ]] || [[ "${path:0:1}" == "~" ]]
+}
+
+src=~/src
+is_wsl && src=/mnt/c/Users/jafischer/src
+
+# Find a directory using various heuristics
+choosedir() {
+  local dir="$1" expanded_dir
+
+  # If no arg given then just echo "" (cd with no args will go to $HOME).
+  [[ -z "$dir" ]] && { echo "$HOME"; return 0; }
+
+  # Similarly, "cd -" means "cd to previous location".
+  [[ "$dir" == "-" ]] && { echo "-"; return 0; }
+
+  # If the specified directory exists, just echo it, and we're done.
+  is_absolute_path "$1" && [[ -d "$dir" ]] && { echo "$dir"; return 0; }
+  ! is_absolute_path "$1" && [[ -d "./$dir" ]] && { echo "./$dir"; return 0; }
+
+  # Check list of shortcuts for some frequent destinations:
+  case $dir in
+    en)         echo "$src/kamaji-eliot-ness"; return 0 ;;
+    ga)         echo "$src/kamaji-garbo"; return 0 ;;
+    gc)         echo "$src/garbo-cpp"; return 0 ;;
+    cap)        echo "$src/capone"; return 0 ;;
+    crc)        echo "$src/capone-report-collector"; return 0 ;;
+    crp)        echo "$src/capone-report-processor"; return 0 ;;
+    ccs)        echo "$src/capone-content-store"; return 0 ;;
+    cc)         echo "$src/capone-cron"; return 0 ;;
+    sp)         echo "$src/speakeasy2"; return 0 ;;
+    sc)         echo "$src/safety-commons"; return 0 ;;
+    ss)         echo "$src/safety-scripts"; return 0 ;;
+    lf)         echo "$src/lego-framework"; return 0 ;;
+    3)          echo "$src/../3rdparty"; return 0 ;;
+    p)          echo "$src/pickford"; return 0 ;;
+    pf)         echo "$src/pathfinder"; return 0 ;;
+    prof)       echo "$src/pathfinder/sdk/target/samples/sample_code/playstation_network/api_webapi_profanity"; return 0 ;;
+    dl)         echo ~/Downloads; return 0 ;;
+    v)          echo ~/Library/Mobile\ Documents/com~apple~CloudDocs/voroncfg; return 0 ;;
+    m)          echo "$src/meccano"; return 0 ;;
+    gb)         echo "$src/gatsby"; return 0 ;;
+  esac
+
+  # Search for the directory in $CDPATH.
+  for path_dir in ${CDPATH//:/ }; do
+    # The added "eval" is there to expand ~ into the home dir.
+    path_dir="$(eval echo ${path_dir})"
+    expanded_dir="$(eval echo ${path_dir}/$dir)"
+
+    if [[ -d $expanded_dir ]]; then
+      echo "$expanded_dir"
+      return 0
+    fi
+
+    # New feature: intelligently figure out shortcuts. E.g. "ken" will match with kamaji-eliot-ness.
+    # Convert $dir to a regex. E.g. "ken" --> "^\./k[^-]*-e[^-]*-n[^-]*$"
+    local regex=$(echo $dir | sed -e 's/\(.\)/\1[^-]*-/g; s/-$/\$/; s/^/\^\\.\//1')
+    
+    # Use find to list files in the current directory that are directories.
+    pushd $path_dir >&/dev/null || { echo "Invalid dir in CDPATH: '$path_dir'"; return 1; }
+    local local_dir local_dirs=$(find . -maxdepth 1 -type d ! -name .)
+
+    for local_dir in $local_dirs; do
+      echo "$local_dir" | grep "$regex" >& /dev/null
+      if [[ $? == 0 ]]; then
+        expanded_dir="$(eval echo ${path_dir}/$local_dir)"
+        echo "$expanded_dir"
+        popd >& /dev/null
+        return 0
+      fi
+    done
+    popd >& /dev/null
+  done
+
+  # Not found, so just echo the argument
+  echo $dir
+}
+
+mycd() {
+  \cd "$(choosedir "$1")"
+}
+
+launch_ide() {
+  local ide="$1" dir="$2"
+
+  ( $ide "$(choosedir "$dir" "$src")" >&/dev/null & sleep 7; layout )
+}
+
+# ij for IntelliJ
+ij() {
+  launch_ide idea "$1"
+}
+
+# cl for CLion
+cl() {
+  launch_ide clion "$1"
+}
+
+# rr for RustRover
+rr() {
+  launch_ide rustrover "$1"
+}
+
+# ws for WebStorm
+ws() {
+  launch_ide webstorm "$1"
+}
+
+# "gl" is already an alias, so gogo for GoLand
+gogo() {
+  launch_ide goland "$1"
+}
+
+myvi() {
+  is_mac && mvim "$@" && return
+
+  local args="$@" fixedargs
+
+  # Since gvim.exe is a Windows exe, need to convert any linux paths to \\wsl$\Ubuntu-18.04\...
+  for arg in $args; do
+    if [[ -n $(readlink "$arg") ]]; then
+      arg=$(readlink "$arg")
+    fi
+    arg=$(windows_path "$arg")
+
+    fixedargs="$fixedargs $arg"
+  done
+
+  ( gvim.exe $fixedargs >&/dev/null & )
+}
+
+# Yes/no prompt
+ask() {
+    echo -n "$@" '[y/n] ' ; read ans
+    case "$ans" in
+        y*|Y*) return 0 ;;
+        *) return 1 ;;
+    esac
+}
+
+# Get name of app that created a corefile.
+corename() {
+    for file ; do
+        echo -n $file : ; gdb --core=$file --batch | head -1
+    done 
+}
+
+# Extract just the ipv4 addresses from ifconfig output
+ip() {
+    echo
+    ifconfig | grep "inet" | awk2 | grep -v '::'
+    echo
+}
+
+log() {
+  echo -e `date +%T` $*
+}
+
+# Since 'in' is a keyword, using 'inn'.
+# This function performs a command in the specified directory(ies).
+#
+# Examples:
+# inn ./abc touch somefile
+# inn ./\* doSomething \> something.out
+#
+inn() {
+  local dirs=$1
+  shift
+
+  for dir in $dirs; do
+    pushd $dir >/dev/null || { echo -e $RED$dir is not a directory$NC; continue; }
+
+    echo -e "\x1b[1;44;33mDir: $dir\tCmd: " "$@" "$NC"
+
+    eval "$@" || echo -e "${RED}Command failed in $dir$NC"
+
+    popd >/dev/null
+  done
+}
+
+# I hate how the 'expr' command doesn't do floating point. 
+fexpr() {
+  python3 -c "import math; print($*)"
+}
+
+# Search libraries in the current directory for a symbol
+findlib() {
+  for f in *.a; do
+    nm $f | grep "$*" && echo $f
+  done
+}
+
+# Because I save a huge history, I don't want to show it all by default (otherwise it fills my terminal screen buffer).
+h() {
+  count=$1
+  if [[ -z "$1" ]]; then
+    count=50
+  else
+    shift
+  fi
+
+  history $count $*
+}
+
+hgrep() {
+  history | grep "$@" | grep -v hgrep
+}
+
+get_aloypw() {
+  pbcopy < ~/.ssh/aloypw
+}
+
+tunnel-garbo-e1() {
+  get_aloypw
+  ssh -L 4306:kmj-garbo-e1-np.cluster-cfb7xbwcpaob.us-west-2.rds.amazonaws.com:3306 jafischer@$e1_bastion -fN || echo ssh failed
+  echo "e1 MySql port is 4306"
+}
+
+tunnel-garbo-p1() {
+  get_aloypw
+  ssh -L 5306:kmj-garbo-p1-np.cluster-ctui8sdcnnfo.us-west-2.rds.amazonaws.com:3306 jafischer@$p1_bastion -fN || echo ssh failed
+  echo "p1 MySql port is 5306"
+}
+
+tunnel-capone-e1() {
+  get_aloypw
+  ssh -L 3308:kamaji-capone-e1-np.cj1zgkuiflmb.us-west-1.rds.amazonaws.com:3306 jafischer@$e1_bastion -fN || echo ssh failed
+  echo "Note: e1 port is 3308."
+}
+
+tunnel-capone-p1() {
+  get_aloypw
+  ssh -L 3310:kamaji-capone-usw2-p1-np-cluster.cluster-ctui8sdcnnfo.us-west-2.rds.amazonaws.com:3306 jafischer@$p1_bastion -fN || echo ssh failed
+  echo "Note: p1 port is 3310."
+}
+
+utc-to-local() {
+  # Input format must be 2021-02-19T15:10:28Z
+  #local t=${1:0:4}-${1:4:2}-${1:6:5}:${1:11:2}:${1:13:2}
+  local t=${1/T/ }
+  date +"%F %T" -d "${t} +0"
+}
+
+xaloy() {
+  get_aloypw
+  xaws Aloy
+}
+
+slog() {
+  sk8s logs "$@"
+  [[ -d sk8s-logs ]] && vi sk8s-logs
+}
+
+clone-sie() {
+  cd ~/src
+  git clone git@github.sie.sony.com:SIE/$1.git "${@:2}"
+}
+
+# Switch between JDK versions
+jdk() {
+  [[ -z $1 ]] && { 
+    echo "Usage: jdk VERSION"
+    exit 1
+  }
+
+  sudo rm /Library/Java/JavaVirtualMachines/current
+  [[ -e /Library/Java/JavaVirtualMachines/amazon-corretto-$1.jdk ]] || {
+    echo "/Library/Java/JavaVirtualMachines/amazon-corretto-$1.jdk not found."
+    exit 1
+  }
+
+  sudo ln -s amazon-corretto-$1.jdk /Library/Java/JavaVirtualMachines/current
+}
+
+if is_mac; then
+  #
+  # Mac-specific functions
+  #
+
+  meld() {
+    ( /Users/jafischer/Applications/Meld.app/Contents/MacOS/Meld "$@" >&/dev/null & )
+  }
+
+  # Launch DiffMerge
+  dm() {
+    ( /Users/jafischer/Applications/DiffMerge.app/Contents/MacOS/DiffMerge "$@" >&/dev/null & )
+  }
+
+elif is_wsl; then
+  #
+  # WSL-specific functions
+  #
+
+  meld()
+  {
+    Meld.exe "$@" &
+  }
+
+  # Convert a path to linux format.
+  linux_path()
+  {
+    local p="$1"
+
+    is_linux || echo "ERROR: linux_path called on $(uname)"
+ 
+    # Convert Windows drive letter to /mnt path.
+    p=${p/C:/\/mnt\/c}
+    p=${p/D:/\/mnt\/c}
+    p=${p/E:/\/mnt\/c}
+    p=${p/F:/\/mnt\/c}
+  
+    # Replace backslashes with forward slashes.
+    p=${p//\\/\/}
+  
+    echo "$p"
+  }
+
+  # Convert a path to Windows format (i.e. so it can be passed to a Windows executable).
+  function windows_path()
+  {
+    local p="$1"
+
+    is_linux || echo "ERROR: windows_path called on $(uname)"
+ 
+    # Change /mnt/c/ to /
+    if [[ "$p" == "/mnt/"* ]]; then
+      p=${p/\/mnt\/?/}
+    else
+      # In case ~ is not expanded:
+      if [[ "$p" == "~/"* ]]; then
+        p="$HOME${p/~/}"
+      fi
+
+      # Relative paths work as-is, because the windows process starts up with the Linux current directory.
+      # Is this an absolute path?
+      if [[ "$p" == "/"* ]]; then
+        p="//wsl\$/Ubuntu-18.04$p"
+      fi
+    fi
+
+    echo $p
+  }
+fi
+
+urlencode() {
+  echo -n "$@"| jq -sRr '@uri'
+}
+
+bell() {
+  local count=$1
+  [[ -z $count ]] && count=1
+
+  local i
+  for i in $(seq 1 $count); do
+    echo -en '\a'
+  done
+}
+
+sort-by-line-length() {
+  awk '{ print length, $0 }' | sort -n -s | cut -d" " -f2-
+}

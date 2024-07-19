@@ -1,0 +1,143 @@
+# I've installed GNU date as "gdate" on the Mac and use it in the prompt.
+command -v gdate >& /dev/null || alias gdate=date
+
+# Edit and then re-source .bashrc:
+alias virc='\vi ~/.bashrc; . ~/.bashrc; backup_bash_files'
+# Edit and then re-source the aliases:
+alias vialiases='\vi ~/.aliases; . ~/.aliases; backup_bash_files'
+alias via='vialiases' # short form
+# Edit and then re-source the functions:
+alias vifunctions='\vi ~/.functions; . ~/.functions; backup_bash_files'
+alias vifu='vifunctions' # short form
+
+# Use my "mycd" function instead of the cd command:
+alias cd='mycd'
+
+alias vi='myvi'
+
+# ls aliases
+#alias l='ls -G -l'
+#alias ldirs='ls -lG | grep "^d"'
+#alias la='ls -G -Al'          # show hidden files
+#alias lx='ls -G -lXB'         # sort by extension
+#alias lt='ls -G -ltr'         # sort by date, most recent last
+#alias lz='ls -G -lSr'         # sort by size, largest last.
+#alias nodirs='l | gv "^[ld]" | gv "^total"'
+# Trying out eza (https://github.com/eza-community/eza)
+alias l='eza -l -s name'
+alias ldirs='eza -lD -s name'
+alias la='eza -la -s name'
+alias lx='eza -l -s ext'         # sort by extension
+alias lt='eza -l -s date'        # sort by date, most recent last
+alias lz='eza -l -s size'        # sort by size, largest last.
+alias nodirs='eza -l --only-files -s name'
+
+# Misc aliases
+alias up='cd ..'
+alias g='grep -s'
+alias gi='grep -si'
+alias gl='grep -sl'
+alias gil='grep -sil'
+alias gv='grep -sv'
+alias md='mkdir -p'
+alias rd='rmdir'
+alias x='exit'
+alias path='echo -e ${PATH//:/\\n}'
+alias pd=pushd
+alias pp=popd
+alias mj4='make -j4'
+alias en='echo -n'
+# Convenient short form of the find command
+alias fnd='find . -name '
+# Show all processes owned by me
+alias pu="ps -fU $UID"
+# Shutdown now
+alias s0="sudo shutdown -h now"
+# Shutdown and restart
+alias sr0="sudo shutdown -r now"
+alias du="\du -d 0 -m"
+# Directory usage for everything in the current dir, sorted.
+alias dus="du * | sort -n"
+# Quick ping
+alias p="ping -c 1"
+# Kill it dead
+alias k9='kill -9'
+# List zip contents
+alias uv='unzip -v'
+alias hex='printf "0x%08x\n"'
+alias le=less
+alias uuidgen='uuidgen | tr "[:upper:]" "[:lower:]"'
+alias reverse='tail -r'
+# Curl with newline
+alias curlnl='curl -w "\n"'
+
+alias awk1="awk '{print \$1}'"
+alias awk2="awk '{print \$2}'"
+alias awk3="awk '{print \$3}'"
+alias awk4="awk '{print \$4}'"
+alias awk5="awk '{print \$5}'"
+alias awk6="awk '{print \$6}'"
+alias awk7="awk '{print \$7}'"
+alias awk8="awk '{print \$8}'"
+alias awk9="awk '{print \$9}'"
+alias awklast="awk '{print \$NF}'"
+
+# Git aliases
+alias gst='git status'
+alias gcm='git commit'
+alias gpush='git push origin'
+alias gpull='git fetch --prune; git pull'
+alias gchmod='git update-index --chmod=+x'
+
+if is_mac; then
+  icloud_dir="$HOME/Library/Mobile Documents/com~apple~CloudDocs/Documents"
+elif is_wsl; then
+  icloud_dir="/mnt/c/Users/jafischer/iCloudDrive"
+fi
+#alias cdjnl="pushd ${icloud_dir}/Documents/misc/jnl"
+alias cdjnl="pushd ${HOME}/OneDrive/Documents/jnl"
+alias cdicloud="pushd '${icloud_dir}'"
+
+# sk8s aliases
+alias s='/Users/jafischer/src/sk8s/target/debug/sk8s'
+#alias skl='sk8s login'
+#alias skh='sk8s health'
+#alias spf='sk8s port-forward'
+#alias srp='sk8s restart-pods'
+#alias swp='sk8s watch-pods'
+alias 8l='sk8s login'
+alias 8h='sk8s health'
+alias 8pf='sk8s port-forward'
+alias 8rp='sk8s restart-pods'
+alias 8wp='sk8s watch-pods'
+alias 8dv='sk8s deploy-version'
+
+# Skuba aliases
+alias sk='skuba kubectl'
+alias skh='skuba helm'
+alias po='sk get pods'
+alias sksh='skuba shell $(po | tail -n 1 | awk1)'
+alias skbashpod='sk run --rm=true -it test-bash-$(timestamp.sh) --restart=Never --image=761590636927.dkr.ecr.us-west-2.amazonaws.com/raptor/amazonlinux2:20190129T000000Z'
+alias skdelstalereplicas='sk delete replicaset `sk get replicaset | g " 0  *0  *0" | awk1`'
+alias clus='skuba cluster'
+alias ns='skuba namespace'
+
+# Docker aliases
+alias dc='docker-compose --project-name=$(basename $(git remote get-url origin) .git) -f docker-compose.yml $([[ -f docker-compose.override.yml ]] && echo -f docker-compose.override.yml)'
+alias dcls='docker container ls'
+alias dils='docker image ls'
+alias dcstopall='docker container stop `dcls | tail -n +2 | awk1`'
+alias dcp='docker cp'
+alias dcprune='docker container prune --force'
+
+alias gw='./gradlew'
+
+alias cat=bat
+
+# SSH to my 3D Printer's Raspberry Pi:
+alias sshpi='ssh -i ~/.ssh/jafischer.pem pi@fluidpi.local'
+
+alias utctime='date -u'
+
+# Stuff the incredibly annoying "--add-opens" options into the clipboard
+alias add-opens='echo -n "-ea --add-opens java.base/jdk.internal.loader=ALL-UNNAMED --add-opens java.base/java.util.concurrent=ALL-UNNAMED --add-opens java.management/java.lang.management=ALL-UNNAMED --add-opens java.base/java.time=ALL-UNNAMED --add-opens java.base/java.lang.reflect=ALL-UNNAMED" | pbcopy'

@@ -1,0 +1,25 @@
+complete -A alias      alias unalias
+complete -A function   function
+
+complete -A shopt      shopt
+
+complete -A directory  mkdir rmdir
+complete -A directory   -o default cd
+
+# Compression
+complete -f -o default -X '*.+(zip|ZIP)'  zip
+complete -f -o default -X '!*.+(zip|ZIP)' unzip
+complete -f -o default -X '*.+(z|Z)'      compress
+complete -f -o default -X '!*.+(z|Z)'     uncompress
+complete -f -o default -X '*.+(gz|GZ)'    gzip
+complete -f -o default -X '!*.+(gz|GZ)'   gunzip
+complete -f -o default -X '*.+(bz2|BZ2)'  bzip2
+complete -f -o default -X '!*.+(bz2|BZ2)' bunzip2
+# extract is a function defined in ~/.bash_functions
+complete -f -o default -X '!*.+(zip|ZIP|z|Z|gz|GZ|bz2|BZ2)' extract
+
+COMP_WORDBREAKS=${COMP_WORDBREAKS/=/}
+
+complete -o default -F _longopts configure bash
+complete -o default -F _longopts wget id info a2ps ls recode
+complete -F _killall killall killps
