@@ -104,11 +104,6 @@ alias cdicloud='pushd ${icloud_dir}'
 
 # sk8s aliases
 alias s='/Users/jafischer/src/sk8s/target/debug/sk8s'
-#alias skl='sk8s login'
-#alias skh='sk8s health'
-#alias spf='sk8s port-forward'
-#alias srp='sk8s restart-pods'
-#alias swp='sk8s watch-pods'
 alias 8l='sk8s login'
 alias 8h='sk8s health'
 alias 8pf='sk8s port-forward'
@@ -127,12 +122,9 @@ alias clus='skuba cluster'
 alias ns='skuba namespace'
 
 # Docker aliases
-alias dc='docker-compose --project-name=$(basename $(git remote get-url origin) .git) -f docker-compose.yml $([[ -f docker-compose.override.yml ]] && echo -f docker-compose.override.yml)'
 alias dcls='docker container ls'
 alias dils='docker image ls'
 alias dcstopall='docker container stop `dcls | tail -n +2 | awk1`'
-alias dcp='docker cp'
-alias dcprune='docker container prune --force'
 
 alias gw='./gradlew'
 

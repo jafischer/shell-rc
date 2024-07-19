@@ -216,36 +216,6 @@ hgrep() {
   history | grep "$@" | grep -v hgrep
 }
 
-get_aloypw() {
-  pbcopy < ~/.ssh/aloypw
-}
-
-tunnel-garbo-e1() {
-  get_aloypw
-  # shellcheck disable=SC2154
-  ssh -L 4306:kmj-garbo-e1-np.cluster-cfb7xbwcpaob.us-west-2.rds.amazonaws.com:3306 jafischer@$e1_bastion -fN || echo ssh failed
-  echo "e1 MySql port is 4306"
-}
-
-tunnel-garbo-p1() {
-  get_aloypw
-  # shellcheck disable=SC2154
-  ssh -L 5306:kmj-garbo-p1-np.cluster-ctui8sdcnnfo.us-west-2.rds.amazonaws.com:3306 jafischer@$p1_bastion -fN || echo ssh failed
-  echo "p1 MySql port is 5306"
-}
-
-tunnel-capone-e1() {
-  get_aloypw
-  ssh -L 3308:kamaji-capone-e1-np.cj1zgkuiflmb.us-west-1.rds.amazonaws.com:3306 jafischer@$e1_bastion -fN || echo ssh failed
-  echo "Note: e1 port is 3308."
-}
-
-tunnel-capone-p1() {
-  get_aloypw
-  ssh -L 3310:kamaji-capone-usw2-p1-np-cluster.cluster-ctui8sdcnnfo.us-west-2.rds.amazonaws.com:3306 jafischer@$p1_bastion -fN || echo ssh failed
-  echo "Note: p1 port is 3310."
-}
-
 utc-to-local() {
   # Input format must be 2021-02-19T15:10:28Z
   #local t=${1:0:4}-${1:4:2}-${1:6:5}:${1:11:2}:${1:13:2}
@@ -253,19 +223,9 @@ utc-to-local() {
   date +"%F %T" -d "${t} +0"
 }
 
-xaloy() {
-  get_aloypw
-  xaws Aloy
-}
-
 slog() {
   sk8s logs "$@"
   [[ -d sk8s-logs ]] && vi sk8s-logs
-}
-
-clone-sie() {
-  cd $MY_SRC_DIR &&
-    git clone git@github.sie.sony.com:SIE/$1.git "${@:2}"
 }
 
 # Switch between JDK versions
