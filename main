@@ -37,7 +37,7 @@ set_path() {
     my_path="$my_path:/usr/local/MacGPG2/bin"
     my_path="$my_path:/Library/Apple/usr/bin"
     my_path="$my_path:$HOME/go/go1.21.5/bin"
-    my_path="$my_path:$HOME/go"
+    my_path="$my_path:$HOME/go/bin"
     my_path="$my_path::/Users/jafischer/Library/Application Support/JetBrains/Toolbox/scripts"
   elif is_wsl; then
     my_path="$my_path:/opt/apache-maven-3.6.3/bin"
@@ -98,6 +98,7 @@ setup_history(){
   # histreedit: user is given the opportunity to re-edit a failed history substitution
   # histverify: the results of history substitution are not immediately executed; user must press enter.
   shopt -s cmdhist histappend histreedit histverify
+  HISTFILE="$(dirname ${BASH_SOURCE[0]})/history-$(my_os)"
   HISTTIMEFORMAT="%F %T "
   # Preceding a command with a space will omit it from the history.
   HISTCONTROL=ignorespace
@@ -107,8 +108,8 @@ setup_history(){
   HISTFILESIZE=20000
   # "history -a" causes all commands to be immediately appended to .bash_history, instead of only when the shell exits.
   # (useful for when using multiple terminal windows).
-  if [[ "$PROMPT_COMMAND" != *"history"* ]]; then
-    PROMPT_COMMAND="${PROMPT_COMMAND:+$PROMPT_COMMAND$'\n'}history -a"
+  if [[ "$PROMPT_COMMAND" != *"history -a"* ]]; then
+    PROMPT_COMMAND="${PROMPT_COMMAND}; history -a"
   fi
 }
 
@@ -150,11 +151,12 @@ setup_prompt() {
   PS1_dir='[\e[1;33mdir: \e[1;34m\w\e[0m] '
   if [[ "$TERM_PROGRAM" == "Apple_Terminal" ]]; then
     # shellcheck disable=SC2016
-    PS1_branch='[\e[1;33mbranch: \e[1;34m$(git status 2>&1 | sed -e "s|fatal:.*|On branch: N/A|" | grep "On branch" | cut -f 3 -d" ")\e[0m] '
+    # `ps1_branch` and `ps1_ns` are functions in the `functions` file.
+    PS1_branch='[\e[1;33mbranch: \e[1;34m$(ps1_branch)\e[0m] '
     #PS1_clus='[\e[1;33mclus: \e[1;34m$(skuba cluster | grep yes | cut -f 1 -d\ )\e[0m] '
     #PS1_ns='[ns: \e[1;34m$(kubectl config get-contexts | grep "^\*" | awk "{print \$NF}")\e[0m]\n'
     # shellcheck disable=SC2016
-    PS1_ns='[\e[1;33mns: \e[1;34m$(kubectl config view --minify -o jsonpath="{..namespace}")\e[0m]\n'
+    PS1_ns='[\e[1;33mns: \e[1;34m$(ps1_ns)\e[0m]\n'
     # `brew install coreutils` to get gdate
     # shellcheck disable=SC2016
     PS1_timestamp='$(gdate +%H:%M:%S.%3N)'
