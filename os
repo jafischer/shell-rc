@@ -13,3 +13,15 @@ is_linux() {
 is_wsl() {
   is_linux && [[ -d /mnt/c ]]
 }
+
+my_os() {
+  if is_mac; then
+    echo mac
+  elif is_wsl; then
+    echo wsl
+  elif is_linux; then
+    echo linux
+  else
+    echo unknown-os
+  fi    
+}

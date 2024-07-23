@@ -13,7 +13,7 @@ main() {
 }
 
 # I don't want to source `functions` at the top, so I've placed the is_mac/is_linux/is_wsl functions in a separate file
-source "$(dirname ${BASH_SOURCE[0]})/is_platform"
+source "$(dirname ${BASH_SOURCE[0]})/os"
 
 set_path() {
   # Because this file might get sourced repeatedly, we don't want to keep appending PATH to itself over and over.
