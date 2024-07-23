@@ -2,6 +2,22 @@
 # Note: the hash-bang above was only added so that my IDE knows this is a bash script. But this script must be
 # sourced, not executed from the command line.
 
+ps1_branch() {
+  # Built-in BSD date doesn't do nanoseconds, so I installed gdate.
+  local t1=$(gdate +%s%N)
+  echo -n "$(git status 2>&1 | sed -e "s|fatal:.*|On branch: N/A|" | grep "On branch" | cut -f 3 -d' ')"
+  local t2=$(gdate +%s%N)
+  [[ -n $DEBUG ]] && echo " ($(((t2 - t1) / 1000000))ms)"
+}
+
+ps1_ns() {
+  # Built-in BSD date doesn't do nanoseconds, so I installed gdate.
+  local t1=$(gdate +%s%N)
+  echo -n "$(kubectl config view --minify -o jsonpath="{..namespace}")"
+  local t2=$(gdate +%s%N)
+  [[ -n $DEBUG ]] && echo " ($(((t2 - t1) / 1000000))ms)"
+}
+
 is_absolute_path() {
   local path="$1"
   [[ "${path:0:1}" == "/" ]] || [[ "${path:0:1}" == "~" ]]
