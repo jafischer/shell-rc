@@ -5,5 +5,5 @@ Can't believe it took me so long to put these in git. All I had to do was move t
 My `.bash_profile` now:
 
 ```
-source ~/src/bash/main
+source ~/src/bash/bashrc
 ```
