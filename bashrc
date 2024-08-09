@@ -98,12 +98,15 @@ setup_history(){
   # histreedit: user is given the opportunity to re-edit a failed history substitution
   # histverify: the results of history substitution are not immediately executed; user must press enter.
   shopt -s cmdhist histappend histreedit histverify
-  HISTFILE="$(dirname ${BASH_SOURCE[0]})/history-$(my_os)"
+  # Exporting HISTFILE so my history-cleanup utility knows where it is.
+  export HISTFILE="$(dirname ${BASH_SOURCE[0]})/history-$(my_os)"
   HISTTIMEFORMAT="%F %T "
-  # Preceding a command with a space will omit it from the history.
-  HISTCONTROL=ignorespace
+  # ignorespace: preceding a command with a space will omit it from the history.
+  # ignoredups: causes lines which match the previous history entry to not be saved
+  # erasedups: causes all previous lines matching the current line to be removed from the history list before that line is saved
+  HISTCONTROL=ignorespace:ignoredups:erasedups
   # Patterns of commands to omit from history:
-  HISTIGNORE="ls:h:l:up:hgrep*:h50:virc:vifu:via:la:lt:lrt:pp:sl:e1:spint:mgmt:pqa:p1"
+  HISTIGNORE="?:??:hgrep*:h50:lrt:gst"
   HISTSIZE=20000
   HISTFILESIZE=20000
   # "history -a" causes all commands to be immediately appended to .bash_history, instead of only when the shell exits.
