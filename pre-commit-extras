@@ -1,0 +1,42 @@
+#!/bin/bash
+
+shrink_history_before_committing() {
+  # HISTFILE won't be set if we're committing from SmartGit
+  if [[ -z $HISTFILE ]]; then
+    echo HISTFILE not set
+    source functions
+    HISTFILE="$(pwd)/history-$(my_os)"
+  fi
+  echo HISTFILE: $HISTFILE
+
+  # Is the history being committed?
+  local staged_file
+  while read -r staged_file; do
+
+    if [[ $staged_file == "history-"* ]]; then
+      # If there are some unstaged changes, abort.
+      if [[ -n "$(git ls-files --modified "$staged_file")" ]]; then
+        FAIL_MSGS="${FAIL_MSGS}! - $staged_file has unstaged changes; need everything staged before running history-shrinker.\n"
+      else
+        echo "Shrinking history file $staged_file"
+        if command -v history-shrinker >& /dev/null; then
+          if ! history-shrinker -l warn --input "$staged_file"; then
+            FAIL_MSGS="${FAIL_MSGS}! - history-shrinker failed!\n"
+          else
+            if ! cmp "$staged_file" shrunk_history; then
+              FAIL_MSGS="${FAIL_MSGS}! - $staged_file has been shrunk; you need to re-stage and commit again.\n"
+              # We can't to this commit, so we'll have to fail if the history file changed, so that we can re-
+              mv shrunk_history "$staged_file"
+            else
+              rm shrunk_history
+            fi
+          fi
+        else
+          FAIL_MSGS="${FAIL_MSGS}! - history-shrinker is not in path!\n"
+        fi
+      fi
+    fi
+  done < "$STAGED_FILES"
+}
+
+shrink_history_before_committing
