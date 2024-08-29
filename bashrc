@@ -48,7 +48,7 @@ set_path() {
 
   # Paths for the cd command to search
   # shellcheck disable=SC2088
-  CDPATH="$HOME/src:$HOME/3rdparty:$HOME/OneDrive/Documents:$HOME"
+  CDPATH="$HOME/src:$HOME/mysrc:$HOME/3rdparty:$HOME/OneDrive/Documents:$HOME"
 }
 
 shell_settings() {
@@ -107,8 +107,8 @@ setup_history(){
   HISTCONTROL=ignorespace:ignoredups:erasedups
   # Patterns of commands to omit from history:
   HISTIGNORE="?:??:hgrep*:h50:lrt:gst"
-  HISTSIZE=20000
-  HISTFILESIZE=20000
+  HISTSIZE=50000
+  HISTFILESIZE=50000
   # "history -a" causes all commands to be immediately appended to .bash_history, instead of only when the shell exits.
   # (useful for when using multiple terminal windows).
   if [[ "$PROMPT_COMMAND" != *"history -a"* ]]; then
