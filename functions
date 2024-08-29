@@ -42,16 +42,12 @@ choosedir() {
     en)         echo "$MY_SRC_DIR/kamaji-eliot-ness"; return 0 ;;
     ga)         echo "$MY_SRC_DIR/kamaji-garbo"; return 0 ;;
     gc)         echo "$MY_SRC_DIR/garbo-cpp"; return 0 ;;
-#    cap)        echo "$MY_SRC_DIR/capone"; return 0 ;;
-#    crc)        echo "$MY_SRC_DIR/capone-report-collector"; return 0 ;;
-#    crp)        echo "$MY_SRC_DIR/capone-report-processor"; return 0 ;;
-#    ccs)        echo "$MY_SRC_DIR/capone-content-store"; return 0 ;;
-#    cc)         echo "$MY_SRC_DIR/capone-cron"; return 0 ;;
     sp)         echo "$MY_SRC_DIR/speakeasy2"; return 0 ;;
     sc)         echo "$MY_SRC_DIR/safety-commons"; return 0 ;;
     ss)         echo "$MY_SRC_DIR/safety-scripts"; return 0 ;;
     lf)         echo "$MY_SRC_DIR/lego-framework"; return 0 ;;
     3)          echo "$MY_SRC_DIR/../3rdparty"; return 0 ;;
+    my)         echo "$MY_SRC_DIR/../mysrc"; return 0 ;;
     p)          echo "$MY_SRC_DIR/pickford"; return 0 ;;
     pf)         echo "$MY_SRC_DIR/pathfinder"; return 0 ;;
     prof)       echo "$MY_SRC_DIR/pathfinder/sdk/target/samples/sample_code/playstation_network/api_webapi_profanity"; return 0 ;;
@@ -59,6 +55,8 @@ choosedir() {
     v)          echo "$icloud_dir/voroncfg"; return 0 ;;
     m)          echo "$MY_SRC_DIR/meccano"; return 0 ;;
     gb)         echo "$MY_SRC_DIR/gatsby"; return 0 ;;
+    pa)         echo "$MY_SRC_DIR/presidio-analyzer"; return 0 ;;
+    pa2)        echo "$MY_SRC_DIR/presidio-anonymizer"; return 0 ;;
   esac
 
   # Search for the directory in $CDPATH.
