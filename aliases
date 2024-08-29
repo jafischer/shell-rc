@@ -70,6 +70,7 @@ alias k9='kill -9'
 # List zip contents
 alias uv='unzip -v'
 alias hex='printf "0x%08x\n"'
+alias dec='printf "%d\n"'
 alias le=less
 alias uuidgen='uuidgen | tr "[:upper:]" "[:lower:]"'
 alias reverse='tail -r'
@@ -87,12 +88,18 @@ alias awk8="awk '{print \$8}'"
 alias awk9="awk '{print \$9}'"
 alias awklast="awk '{print \$NF}'"
 
+# Friendly wrappers for od
+alias od-char='od -c'
+alias od-hex='od -t x1'
+alias od-hexword='od -x'
+
 # Git aliases
 alias gst='git status'
 alias gcm='git commit'
 alias gpush='git push origin'
 alias gpull='git fetch --prune; git pull'
 alias gchmod='git update-index --chmod=+x'
+alias gurl='git-url.sh'
 
 if is_mac; then
   icloud_dir="$HOME/Library/Mobile Documents/com~apple~CloudDocs/Documents"
