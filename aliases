@@ -102,15 +102,15 @@ alias gchmod='git update-index --chmod=+x'
 alias gurl='git-url.sh'
 
 if is_mac; then
-  icloud_dir="$HOME/Library/Mobile Documents/com~apple~CloudDocs/Documents"
+  icloud_dir="$HOME/Library/Mobile Documents/com~apple~CloudDocs"
 elif is_wsl; then
   icloud_dir="/mnt/c/Users/jafischer/iCloudDrive"
 fi
 alias cdjnl='pushd ~/OneDrive/Documents/jnl'
-alias cdicloud='pushd ${icloud_dir}'
+alias cdicloud='pushd "${icloud_dir}"'
 
 # sk8s aliases
-alias s='/Users/jafischer/src/sk8s/target/debug/sk8s'
+alias s='~/mysrc/sk8s/target/debug/sk8s'
 alias 8l='sk8s login'
 alias 8h='sk8s health'
 alias 8pf='sk8s port-forward'
