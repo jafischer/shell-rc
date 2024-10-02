@@ -128,6 +128,11 @@ ws() {
   launch_ide webstorm "$1"
 }
 
+# "py" for PyCharm
+py() {
+  launch_ide pycharm "$1"
+}
+
 # "gl" is already an alias, so gogo for GoLand
 gogo() {
   launch_ide goland "$1"
@@ -197,15 +202,23 @@ inn() {
   shift
 
   for dir in $dirs; do
+    local result=0
     pushd $dir >/dev/null || { echo -e $RED$dir is not a directory$NC; continue; }
 
     echo -e "\x1b[1;44;33mDir: $dir\tCmd: " "$@" "$NC"
 
     # shellcheck disable=SC2294
-    eval "$@" || echo -e "${RED}Command failed in $dir$NC"
+    eval "$@" || {
+      result=$?
+      echo -e "${RED}Command failed in $dir$NC"
+    }
 
     # shellcheck disable=SC2164
     popd >/dev/null
+
+    if [[ $result != 0 ]]; then
+      return $result
+    fi
   done
 }
 
