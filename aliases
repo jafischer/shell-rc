@@ -5,14 +5,6 @@
 # I've installed GNU date as "gdate" on the Mac and use it in the prompt. On WSL, "date" is already GNU date.
 command -v gdate >& /dev/null || alias gdate=date
 
-## Edit and then re-source .bashrc:
-#alias virc='\vi ~/.bashrc; . ~/.bashrc; backup_bash_files'
-## Edit and then re-source the aliases:
-#alias vialiases='\vi ~/.aliases; . ~/.aliases; backup_bash_files'
-#alias via='vialiases' # short form
-## Edit and then re-source the functions:
-#alias vifunctions='\vi ~/.functions; . ~/.functions; backup_bash_files'
-#alias vifu='vifunctions' # short form
 alias resource='source ~/.bash_profile'
 
 # Use my "mycd" function instead of the cd command:
@@ -21,36 +13,43 @@ alias cd='mycd'
 alias vi='myvi'
 
 # ls aliases
-#alias l='ls -G -l'
-#alias ldirs='ls -lG | grep "^d"'
-#alias la='ls -G -Al'          # show hidden files
-#alias lx='ls -G -lXB'         # sort by extension
-#alias lt='ls -G -ltr'         # sort by date, most recent last
-#alias lz='ls -G -lSr'         # sort by size, largest last.
-#alias nodirs='l | gv "^[ld]" | gv "^total"'
-# Trying out eza (https://github.com/eza-community/eza)
-alias l='eza -l -s name'
-alias ldirs='eza -lD -s name'
-alias la='eza -la -s name'
-alias lx='eza -l -s ext'         # sort by extension
-alias lt='eza -l -s date'        # sort by date, most recent last
-alias lz='eza -l -s size'        # sort by size, largest last.
-alias nodirs='eza -l --only-files -s name'
+if command -v eza >&/dev/null; then
+  alias l='ls -G -l'
+  alias ldirs='ls -lG | grep "^d"'
+  alias la='ls -G -Al'          # show hidden files
+  alias lx='ls -G -lXB'         # sort by extension
+  alias lt='ls -G -ltr'         # sort by date, most recent last
+  alias lz='ls -G -lSr'         # sort by size, largest last.
+  alias nodirs='l | gv "^[ld]" | gv "^total"'
+else
+  alias l='eza -l -s name'
+  alias ldirs='eza -lD -s name'
+  alias la='eza -la -s name'
+  alias lx='eza -l -s ext'         # sort by extension
+  alias lt='eza -l -s date'        # sort by date, most recent last
+  alias lz='eza -l -s size'        # sort by size, largest last.
+  alias nodirs='eza -l --only-files -s name'
+fi
 
 # Misc aliases
-alias up='cd ..'
 alias g='grep -s'
+# grep -i == ignore case
 alias gi='grep -si'
+# grep -l == show line numbers
 alias gl='grep -sl'
+# grep -il == grep -i and grep -l combined
 alias gil='grep -sil'
+# grep -v == show everything BUT the matching lines
 alias gv='grep -sv'
 alias md='mkdir -p'
 alias rd='rmdir'
 alias x='exit'
+# Show my $PATH, but one directory per line
 alias path='echo -e ${PATH//:/\\n}'
 alias pd=pushd
 alias pp=popd
 alias mj4='make -j4'
+# Echo without a newline
 alias en='echo -n'
 # Convenient short form of the find command
 alias fnd='find . -name '
@@ -67,16 +66,19 @@ alias dus="du * | sort -n"
 alias p="ping -c 1"
 # Kill it dead
 alias k9='kill -9'
-# List zip contents
+# List zip contents (verbosely)
 alias uv='unzip -v'
 alias hex='printf "0x%08x\n"'
 alias dec='printf "%d\n"'
 alias le=less
+# Stop shouting at me, uuidgen!
 alias uuidgen='uuidgen | tr "[:upper:]" "[:lower:]"'
+# Reverse the lines of a file.
 alias reverse='tail -r'
 # Curl with newline
 alias curlnl='curl -w "\n"'
 
+# Convenient shortcuts for selecting the nth word of output.
 alias awk1="awk '{print \$1}'"
 alias awk2="awk '{print \$2}'"
 alias awk3="awk '{print \$3}'"
@@ -101,13 +103,8 @@ alias gpull='git fetch --prune; git pull'
 alias gchmod='git update-index --chmod=+x'
 alias gurl='git-url.sh'
 
-if is_mac; then
-  icloud_dir="$HOME/Library/Mobile Documents/com~apple~CloudDocs"
-elif is_wsl; then
-  icloud_dir="/mnt/c/Users/jafischer/iCloudDrive"
-fi
 alias cdjnl='pushd ~/OneDrive/Documents/jnl'
-alias cdicloud='pushd "${icloud_dir}"'
+alias cdicloud='pushd "${ICLOUD_DIR}"'
 
 # sk8s aliases
 alias s='~/mysrc/sk8s/target/debug/sk8s'
