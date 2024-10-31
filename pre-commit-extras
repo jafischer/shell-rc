@@ -1,9 +1,12 @@
 #!/bin/bash
 
+# This is a git pre-commit hook, which is sourced by my other pre-commit hook. 
+
 shrink_history_before_committing() {
   # HISTFILE won't be set if we're committing from SmartGit
   if [[ -z $HISTFILE ]]; then
     echo HISTFILE not set
+    # Git hooks are run from the root of the repo, so "functions" will be in the current directory.
     source functions
     HISTFILE="$(pwd)/history-$(my_os)"
   fi

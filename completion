@@ -2,25 +2,23 @@
 # Note: the hash-bang above was only added so that my IDE knows this is a bash script. But this script must be
 # sourced, not executed from the command line.
 
+# Note: I've never really played around with command completion. These all just come from some old
+# bashrc I copied, decades ago.
+
 complete -A alias      alias unalias
 complete -A function   function
 
 complete -A shopt      shopt
+complete -A set        set
 
 complete -A directory  mkdir rmdir
-complete -A directory   -o default cd
+complete -A directory -o default cd
 
 # Compression
 complete -f -o default -X '*.+(zip|ZIP)'  zip
 complete -f -o default -X '!*.+(zip|ZIP)' unzip
 complete -f -o default -X '*.+(z|Z)'      compress
 complete -f -o default -X '!*.+(z|Z)'     uncompress
-complete -f -o default -X '*.+(gz|GZ)'    gzip
-complete -f -o default -X '!*.+(gz|GZ)'   gunzip
-complete -f -o default -X '*.+(bz2|BZ2)'  bzip2
-complete -f -o default -X '!*.+(bz2|BZ2)' bunzip2
-# extract is a function defined in ~/.bash_functions
-complete -f -o default -X '!*.+(zip|ZIP|z|Z|gz|GZ|bz2|BZ2)' extract
 
 COMP_WORDBREAKS=${COMP_WORDBREAKS/=/}
 

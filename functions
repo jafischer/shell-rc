@@ -2,25 +2,20 @@
 # Note: the hash-bang above was only added so that my IDE knows this is a bash script. But this script must be
 # sourced, not executed from the command line.
 
-ps1_branch() {
-  # Built-in BSD date doesn't do nanoseconds, so I installed gdate.
-  local t1=$(gdate +%s%N)
-  echo -n "$(git status 2>&1 | sed -e "s|fatal:.*|On branch: N/A|" | grep "On branch" | cut -f 3 -d' ')"
-  local t2=$(gdate +%s%N)
-  [[ -n $DEBUG ]] && echo " ($(((t2 - t1) / 1000000))ms)"
-}
-
-ps1_ns() {
-  # Built-in BSD date doesn't do nanoseconds, so I installed gdate.
-  local t1=$(gdate +%s%N)
-  echo -n "$(kubectl config view --minify -o jsonpath="{..namespace}")"
-  local t2=$(gdate +%s%N)
-  [[ -n $DEBUG ]] && echo " ($(((t2 - t1) / 1000000))ms)"
-}
-
+# Function used by other functions to determine if path is absolute or relative
 is_absolute_path() {
   local path="$1"
   [[ "${path:0:1}" == "/" ]] || [[ "${path:0:1}" == "~" ]]
+}
+
+# Might seem silly, but it's amazing how much easier it is to type "up" than "cd .."
+# And as an added bonus, you can supply an argument to jump up several directories at once.
+up() {
+  local count=$1 i
+  [[ -z $count ]] && count=1
+  for i in $(seq 1 $count); do
+    \cd .. || return 1
+  done
 }
 
 # Find a directory using various heuristics
@@ -39,24 +34,26 @@ choosedir() {
 
   # Check list of shortcuts for some frequent destinations:
   case $dir in
-    en)         echo "$MY_SRC_DIR/kamaji-eliot-ness"; return 0 ;;
-    ga)         echo "$MY_SRC_DIR/kamaji-garbo"; return 0 ;;
-    gc)         echo "$MY_SRC_DIR/garbo-cpp"; return 0 ;;
-    sp)         echo "$MY_SRC_DIR/speakeasy2"; return 0 ;;
-    sc)         echo "$MY_SRC_DIR/safety-commons"; return 0 ;;
-    ss)         echo "$MY_SRC_DIR/safety-scripts"; return 0 ;;
-    lf)         echo "$MY_SRC_DIR/lego-framework"; return 0 ;;
-    3)          echo "$MY_SRC_DIR/../3rdparty"; return 0 ;;
-    my)         echo "$MY_SRC_DIR/../mysrc"; return 0 ;;
-    p)          echo "$MY_SRC_DIR/pickford"; return 0 ;;
-    pf)         echo "$MY_SRC_DIR/pathfinder"; return 0 ;;
-    prof)       echo "$MY_SRC_DIR/pathfinder/sdk/target/samples/sample_code/playstation_network/api_webapi_profanity"; return 0 ;;
+    en)         echo "$SRC_DIR/kamaji-eliot-ness"; return 0 ;;
+    ga)         echo "$SRC_DIR/kamaji-garbo"; return 0 ;;
+    gc)         echo "$SRC_DIR/garbo-cpp"; return 0 ;;
+    sp)         echo "$SRC_DIR/speakeasy2"; return 0 ;;
+    sc)         echo "$SRC_DIR/safety-commons"; return 0 ;;
+    ss)         echo "$SRC_DIR/safety-scripts"; return 0 ;;
+    lf)         echo "$SRC_DIR/lego-framework"; return 0 ;;
+    3)          echo "$SRC_DIR/../3rdparty"; return 0 ;;
+    my)         echo "$SRC_DIR/../mysrc"; return 0 ;;
+    p)          echo "$SRC_DIR/pickford"; return 0 ;;
+    pf)         echo "$SRC_DIR/pathfinder"; return 0 ;;
+    prof)       echo "$SRC_DIR/pathfinder/sdk/target/samples/sample_code/playstation_network/api_webapi_profanity"; return 0 ;;
     dl)         echo ~/Downloads; return 0 ;;
-    v)          echo "$icloud_dir/voroncfg"; return 0 ;;
-    m)          echo "$MY_SRC_DIR/meccano"; return 0 ;;
-    gb)         echo "$MY_SRC_DIR/gatsby"; return 0 ;;
-    pa)         echo "$MY_SRC_DIR/presidio-analyzer"; return 0 ;;
-    pa2)        echo "$MY_SRC_DIR/presidio-anonymizer"; return 0 ;;
+    v)
+      # shellcheck disable=SC2154
+      echo "$ICLOUD_DIR/voroncfg"; return 0 ;;
+    m)          echo "$SRC_DIR/meccano"; return 0 ;;
+    gb)         echo "$SRC_DIR/gatsby"; return 0 ;;
+    pa)         echo "$SRC_DIR/presidio-analyzer"; return 0 ;;
+    pa2)        echo "$SRC_DIR/presidio-anonymizer"; return 0 ;;
   esac
 
   # Search for the directory in $CDPATH.
@@ -102,45 +99,31 @@ mycd() {
   \cd "$(choosedir "$1")"
 }
 
+# Functions for launching an IDE on a project directory, using the same logic as
+# my cd command (e.g. "ij en" to launch IntelliJ on my kamaji-eliot-ness repo).
 launch_ide() {
   local ide="$1" dir="$2"
 
   ( $ide "$(choosedir "$dir")" >&/dev/null & sleep 7; layout )
 }
-
 # ij for IntelliJ
-ij() {
-  launch_ide idea "$1"
-}
-
+ij() { launch_ide idea "$1"; }
 # cl for CLion
-cl() {
-  launch_ide clion "$1"
-}
-
+cl() { launch_ide clion "$1"; }
 # rr for RustRover
-rr() {
-  launch_ide rustrover "$1"
-}
-
+rr() { launch_ide rustrover "$1"; }
 # ws for WebStorm
-ws() {
-  launch_ide webstorm "$1"
-}
-
+ws() { launch_ide webstorm "$1"; }
 # "py" for PyCharm
-py() {
-  launch_ide pycharm "$1"
-}
-
+py() { launch_ide pycharm "$1"; }
 # "gl" is already an alias, so gogo for GoLand
-gogo() {
-  launch_ide goland "$1"
-}
+gogo() { launch_ide goland "$1"; }
 
 myvi() {
+  # If running on a Mac, just run mvim with the supplied arguments.
   is_mac && mvim "$@" && return
 
+  # On Windows/WSL, it's a tad more complicated...
   local fixedargs
 
   # Since gvim.exe is a Windows exe, need to convert any linux paths to \\wsl$\Ubuntu-18.04\...
@@ -158,32 +141,32 @@ myvi() {
 
 # Yes/no prompt
 ask() {
-    echo -n "$@" '[y/n] ' ; read ans
-    case "$ans" in
-        y*|Y*) return 0 ;;
-        *) return 1 ;;
-    esac
+  echo -n "$@" '[y/n] ' ; read ans
+  case "$ans" in
+    y*|Y*) return 0 ;;
+    *) return 1 ;;
+  esac
 }
 
 # Get name of app that created a corefile.
 corename() {
-    for file ; do
-        echo -n $file : ; gdb --core=$file --batch | head -1
-    done 
+  for file ; do
+    echo -n $file : ; gdb --core=$file --batch | head -1
+  done
 }
 
 # Extract just the ipv4 addresses from ifconfig output
 ip() {
-    echo
-    ifconfig | grep "inet" | awk2 | grep -v ':'
-    echo
+  echo
+  ifconfig | grep "inet" | awk2 | grep -v ':'
+  echo
 }
 
 # Extract just the ipv6 addresses from ifconfig output
 ip6() {
-    echo
-    ifconfig | grep "inet" | awk2 | grep ':'
-    echo
+  echo
+  ifconfig | grep "inet" | awk2 | grep ':'
+  echo
 }
 
 log() {
@@ -235,6 +218,7 @@ findlib() {
 }
 
 # Because I save a huge history, I don't want to show it all by default (otherwise it fills my terminal screen buffer).
+# So this shows 50 lines by default, or the number specified as an argument.
 h() {
   count=$1
   if [[ -z "$1" ]]; then
@@ -246,10 +230,12 @@ h() {
   history $count "$@"
 }
 
+# Search your history
 hgrep() {
   history | grep "$@" | grep -v hgrep
 }
 
+# Convert UTC time to local.
 utc-to-local() {
   # Input format must be 2021-02-19T15:10:28Z
   #local t=${1:0:4}-${1:4:2}-${1:6:5}:${1:11:2}:${1:13:2}
@@ -257,6 +243,7 @@ utc-to-local() {
   date +"%F %T" -d "${t} +0"
 }
 
+# Run "sk8s logs" and then launch vim on the log directory.
 slog() {
   sk8s logs "$@"
   [[ -d sk8s-logs ]] && vi sk8s-logs
@@ -349,10 +336,12 @@ elif is_wsl; then
   }
 fi
 
+# URL-encode the arguments
 urlencode() {
   echo -n "$@"| jq -sRr '@uri'
 }
 
+# Sound a bell (useful when running a long command and you want to know when it's finished).
 bell() {
   local count=$1
   [[ -z $count ]] && count=1
@@ -363,6 +352,26 @@ bell() {
   done
 }
 
+# Sort the input by line length (longest last).
 sort-by-line-length() {
   awk '{ print length, $0 }' | sort -n -s | cut -d" " -f2-
 }
+
+# "xa", short for "xaws Aloy", but the with added benefit of highlighting the
+# desired role in the bewilderingly long list of role choices.
+#
+# Example:
+# xa dev16
+xa() {
+  local role=$1
+
+  if [[ -z $role ]]; then
+    xaws Aloy
+  else
+    xaws Aloy 2>&1 |
+      # This funky perl line is just to get the desired role highlighted.
+      # And we're using Perl rather than sed because OSX sed doesn't support \x, but perl does!
+      perl -p -e "s/Account:/\x1b\[0mAccount:/; s/(Account: .*$role)/\x1b\[1;32m\$1/"
+  fi
+}
+
