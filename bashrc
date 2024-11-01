@@ -2,7 +2,9 @@
 # Note: the hash-bang above was only added so that my IDE knows this is a bash script. But this script must be
 # sourced, not executed from the command line.
 
+# Define a bunch of functions for organization & readability, then call "bashrc_main" at the end to kick it all off.
 bashrc_main() {
+  bashrc_aliases_and_functions
   bashrc_set_path
   bashrc_shell_settings
   bashrc_color_variables
@@ -12,12 +14,21 @@ bashrc_main() {
   bashrc_finish_up
 }
 
-# I don't want to source `functions` at the top (I forget why), so I've placed
-# the is_mac/is_linux/is_wsl functions in a separate file.
-source "$(dirname ${BASH_SOURCE[0]})/os"
+bashrc_aliases_and_functions() {
+  #-------------------------------------------------------------
+  # Aliases and functions
+  #-------------------------------------------------------------
+  # Must call `functions` first because `aliases` uses is_mac/is_wsl etc.
+  source "$(dirname ${BASH_SOURCE[0]})/functions"
+  source "$(dirname ${BASH_SOURCE[0]})/aliases"
+  source "$(dirname ${BASH_SOURCE[0]})/completion"
+}
 
 bashrc_set_path() {
-  # Because this file might get sourced repeatedly, we don't want to keep appending PATH to itself over and over.
+  local my_path
+
+  # Because this file might get sourced repeatedly (when I'm tweaking it and re-sourcing it),
+  # we don't want to keep appending PATH to itself over and over.
   # So the first time this file is sourced, we'll store the path in $ORIG_PATH.
   if [[ -z $ORIG_PATH ]]; then
     #echo "Original path is: $PATH"
@@ -27,7 +38,7 @@ bashrc_set_path() {
   fi
 
   # Add components to path one at a time, just for readability.
-  local my_path="$HOME/bin/binaries"
+  my_path="$HOME/bin/binaries"
   my_path="$my_path:$HOME/bin"
   my_path="$my_path:$HOME/src/safety-scripts"
   my_path="$my_path:$HOME/src/garbo-cpp/cmake-build-release"
@@ -50,8 +61,7 @@ bashrc_set_path() {
   # Combine the paths above with ":" as separator:
   export PATH="$ORIG_PATH:$my_path"
 
-  # Paths for the cd command to search
-  # shellcheck disable=SC2088
+  # Paths for the cd command to search.
   CDPATH="$HOME/src:$HOME/mysrc:$HOME/3rdparty:$HOME/OneDrive/Documents:$HOME"
 }
 
@@ -64,26 +74,32 @@ bashrc_shell_settings() {
 
   # Report the status of terminated background jobs immediately, rather than before the next primary prompt
   set -o notify
-  # "Noclobber" off means you can overwrite files when redirecting to them. I find the risk acceptable.
+  # "noclobber" off means you can overwrite files when redirecting to them. I find the risk acceptable.
   # set -o noclobber
-  # "Nounset" would cause errors if attempting to use variables that aren't set. E.g. "echo $asdf"
+  # "nounset" would cause errors if attempting to use variables that aren't set. E.g. "echo $asdf"
   # set -o nounset
   # set -o xtrace          # Useful for debuging.
 
   # Case-insensitive tab completion for the win:
   bind "set completion-ignore-case on"
-  # This is so useful to me. Just hit tab and it'll show you all the choices. Don't have to hit double-tab.
+  # This is so useful to me. Just hit tab once and it'll show you all the choices. Don't have to hit double-tab.
   bind "set show-all-if-ambiguous on"
 
-  # Enable options:
-  shopt -s cdspell      # Minor errors in directory names will be corrected.
-  shopt -s checkwinsize # update the values of LINES and COLUMNS if window size is changed.
+  # Minor errors in directory names will be corrected.
+  shopt -s cdspell
+  # Update the values of LINES and COLUMNS if window size is changed.
+  shopt -s checkwinsize
+  # If you accidentally hit tab on an empty command line, it won't show you all available commands.
   shopt -s no_empty_cmd_completion
-  shopt -s extglob        # Necessary for programmable completion.
+  # Necessary for programmable completion.
+  shopt -s extglob
 }
 
 bashrc_color_variables() {
-  # Define some variables containing ANSI escape sequences we can use with "echo -e" to get colorful output:
+  #-------------------------------------------------------------
+  # Define some variables containing ANSI escape sequences
+  # that we can use with "echo -e" to get colorful output.
+  #-------------------------------------------------------------
   black='\x1b[0;30m'; red='\x1b[0;31m'; green='\x1b[0;32m'; yellow='\x1b[0;33m'; blue='\x1b[0;34m'; pink='\x1b[0;35m'; cyan='\x1b[0;36m'; grey='\x1b[0;37m';
   BLACK='\x1b[1;30m'; RED='\x1b[1;31m'; GREEN='\x1b[1;32m'; YELLOW='\x1b[1;33m'; BLUE='\x1b[1;34m'; PINK='\x1b[1;35m'; CYAN='\x1b[1;36m'; WHITE='\x1b[1;37m'
   NC='\x1b[0m' # No Color
@@ -91,7 +107,7 @@ bashrc_color_variables() {
 
 bashrc_setup_history(){
   #-------------------------------------------------------------
-  # History config:
+  # History config
   #-------------------------------------------------------------
 
   # cmdhist: Save all lines of a multiple-line command in the same history entry.  This allows easy re-editing of multi-line commands.
@@ -99,8 +115,7 @@ bashrc_setup_history(){
   # histreedit: user is given the opportunity to re-edit a failed history substitution
   # histverify: the results of history substitution are not immediately executed; user must press enter.
   shopt -s cmdhist histappend histreedit histverify
-  # Exporting HISTFILE so my history-cleanup utility knows where it is.
-  export HISTFILE="$(dirname ${BASH_SOURCE[0]})/history-$(my_os)"
+  HISTFILE="$HOME/mysrc/bash-history/history-$(hostname)"
   HISTTIMEFORMAT="%F %T "
   # ignorespace: preceding a command with a space will omit it from the history.
   # ignoredups: causes lines which match the previous history entry to not be saved
@@ -119,7 +134,7 @@ bashrc_setup_history(){
 
 bashrc_setup_prompt() {
   #-------------------------------------------------------------
-  # Set up a fancy prompt
+  # Set up a fancy prompt to impress the ladies
   #-------------------------------------------------------------
 
   # The bash shell lets you customize your command prompt via the PS1 variable. You can just set it to a string,
@@ -166,7 +181,7 @@ bashrc_setup_prompt() {
     # shellcheck disable=SC2016
     PS1_ns='[\e[1;33mns: \e[1;34m$(kubectl config view --minify -o jsonpath="{..namespace}")\e[0m]\n'
     # `brew install coreutils` to get gdate
-    if command -v gdate >&/dev/null; then
+    if is_installed gdate; then
       # shellcheck disable=SC2016
       PS1_timestamp='$(gdate +%H:%M:%S.%3N)'
     else
@@ -178,6 +193,10 @@ bashrc_setup_prompt() {
 }
 
 bashrc_set_variables() {
+  #-------------------------------------------------------------
+  # Set some environment variables (the ones with "export") and
+  # some variables used in my aliases and functions.
+  #-------------------------------------------------------------
   SRC_DIR=~/src
   is_wsl && SRC_DIR=/mnt/c/Users/jafischer/src
   ICLOUD_DIR="$HOME/Library/Mobile Documents/com~apple~CloudDocs"
@@ -187,34 +206,30 @@ bashrc_set_variables() {
   # I'm currently using (see the "jdk" function in ./functions)
   export JAVA_HOME=/Library/Java/JavaVirtualMachines/current/Contents/Home
 
+  # Vi forever!
   export EDITOR=vim
   export EXINIT="source $HOME/.vimrc"
-
-  export AWS_DEFAULT_PROFILE=sie-cloud-kamaji-admin16-zz-jafischer
-  export AWS_PROFILE=sie-cloud-kamaji-admin16-zz-jafischer
 
   export GOROOT=~/go/go1.21.5
 }
 
 bashrc_finish_up() {
-  # Just in case I ever forget after adding a new file under .ssh or .secrets:
+  #-------------------------------------------------------------
+  # Miscellaneous
+  #-------------------------------------------------------------
+
+  # Just in case I ever forget after adding a new file under .ssh or .secrets.
+  # All files in those directories should be only readable by me.
   chmod -R og-rwx ~/.ssh ~/.secrets
 
-  # Cargo: build cmd for Rust
   # shellcheck disable=SC1090
   source ~/.cargo/env
   # Gimme-aws-creds: credentials for AWS (https://github.sie.sony.com/SIE/gimme-aws-creds)
   # shellcheck disable=SC1090
   source ~/.gimme-aws-creds-xaws
-  # fzf: Fuzzy finder (https://github.com/junegunn/fzf)
-  command -v fzf >& /dev/null && eval "$(fzf --bash)"
 
-  #-------------------------------------------------------------
-  # Aliases and functions
-  #-------------------------------------------------------------
-  source "$(dirname ${BASH_SOURCE[0]})/aliases"
-  source "$(dirname ${BASH_SOURCE[0]})/functions"
-  source "$(dirname ${BASH_SOURCE[0]})/completion"
+  # fzf: Fuzzy finder (https://github.com/junegunn/fzf)
+  is_installed fzf && eval "$(fzf --bash)"
 
   # Convert ~ to $HOME in PATH. Do this at the end to account for paths added by any sourced scripts above.
   export PATH="${PATH//\~/$HOME}"

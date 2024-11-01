@@ -9,7 +9,6 @@ complete -A alias      alias unalias
 complete -A function   function
 
 complete -A shopt      shopt
-complete -A set        set
 
 complete -A directory  mkdir rmdir
 complete -A directory -o default cd

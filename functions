@@ -2,10 +2,41 @@
 # Note: the hash-bang above was only added so that my IDE knows this is a bash script. But this script must be
 # sourced, not executed from the command line.
 
-# Function used by other functions to determine if path is absolute or relative
+# Some functions to determine what system we're running on (I use the same bash scripts on Windows/WSL and
+# the Mac.
+is_mac() {
+  [[ $(uname) == "Darwin" ]]
+}
+
+is_linux() {
+  [[ $(uname) == "Linux" ]]
+}
+
+is_wsl() {
+  is_linux && [[ -d /mnt/c ]]
+}
+
+my_os() {
+  if is_mac; then
+    echo mac
+  elif is_wsl; then
+    echo wsl
+  elif is_linux; then
+    echo linux
+  else
+    echo unknown-os
+  fi
+}
+
+# Determine if a path is absolute or relative
 is_absolute_path() {
   local path="$1"
   [[ "${path:0:1}" == "/" ]] || [[ "${path:0:1}" == "~" ]]
+}
+
+# Determine if a command is installed
+is_installed() {
+  command -v $1 >&/dev/null
 }
 
 # Might seem silly, but it's amazing how much easier it is to type "up" than "cd .."
@@ -18,9 +49,12 @@ up() {
   done
 }
 
-# Find a directory using various heuristics
+# Find a directory using various heuristics. This is used by "mycd" and the various IDE-launching functions below.
+# Example:
+# $ choosedir crc
+# /Users/jafischer/src/capone-report-collector
 choosedir() {
-  local dir="$1" expanded_dir
+  local dir="$1" path_dir expanded_dir regex local_dir local_dirs
 
   # If no arg given then just echo "" (cd with no args will go to $HOME).
   [[ -z "$dir" ]] && { echo "$HOME"; return 0; }
@@ -34,26 +68,24 @@ choosedir() {
 
   # Check list of shortcuts for some frequent destinations:
   case $dir in
-    en)         echo "$SRC_DIR/kamaji-eliot-ness"; return 0 ;;
-    ga)         echo "$SRC_DIR/kamaji-garbo"; return 0 ;;
-    gc)         echo "$SRC_DIR/garbo-cpp"; return 0 ;;
-    sp)         echo "$SRC_DIR/speakeasy2"; return 0 ;;
-    sc)         echo "$SRC_DIR/safety-commons"; return 0 ;;
-    ss)         echo "$SRC_DIR/safety-scripts"; return 0 ;;
-    lf)         echo "$SRC_DIR/lego-framework"; return 0 ;;
-    3)          echo "$SRC_DIR/../3rdparty"; return 0 ;;
-    my)         echo "$SRC_DIR/../mysrc"; return 0 ;;
-    p)          echo "$SRC_DIR/pickford"; return 0 ;;
-    pf)         echo "$SRC_DIR/pathfinder"; return 0 ;;
-    prof)       echo "$SRC_DIR/pathfinder/sdk/target/samples/sample_code/playstation_network/api_webapi_profanity"; return 0 ;;
-    dl)         echo ~/Downloads; return 0 ;;
-    v)
-      # shellcheck disable=SC2154
-      echo "$ICLOUD_DIR/voroncfg"; return 0 ;;
-    m)          echo "$SRC_DIR/meccano"; return 0 ;;
-    gb)         echo "$SRC_DIR/gatsby"; return 0 ;;
-    pa)         echo "$SRC_DIR/presidio-analyzer"; return 0 ;;
-    pa2)        echo "$SRC_DIR/presidio-anonymizer"; return 0 ;;
+    en)   echo "$SRC_DIR/kamaji-eliot-ness"; return 0 ;;
+    ga)   echo "$SRC_DIR/kamaji-garbo"; return 0 ;;
+    gc)   echo "$SRC_DIR/garbo-cpp"; return 0 ;;
+    sp)   echo "$SRC_DIR/speakeasy2"; return 0 ;;
+    sc)   echo "$SRC_DIR/safety-commons"; return 0 ;;
+    ss)   echo "$SRC_DIR/safety-scripts"; return 0 ;;
+    lf)   echo "$SRC_DIR/lego-framework"; return 0 ;;
+    3)    echo "$SRC_DIR/../3rdparty"; return 0 ;;
+    my)   echo "$SRC_DIR/../mysrc"; return 0 ;;
+    p)    echo "$SRC_DIR/pickford"; return 0 ;;
+    pf)   echo "$SRC_DIR/pathfinder"; return 0 ;;
+    prof) echo "$SRC_DIR/pathfinder/sdk/target/samples/sample_code/playstation_network/api_webapi_profanity"; return 0 ;;
+    dl)   echo ~/Downloads; return 0 ;;
+    v)    echo "$ICLOUD_DIR/voroncfg"; return 0 ;;
+    m)    echo "$SRC_DIR/meccano"; return 0 ;;
+    gb)   echo "$SRC_DIR/gatsby"; return 0 ;;
+    pa)   echo "$SRC_DIR/presidio-analyzer"; return 0 ;;
+    pa2)  echo "$SRC_DIR/presidio-anonymizer"; return 0 ;;
   esac
 
   # Search for the directory in $CDPATH.
@@ -63,23 +95,32 @@ choosedir() {
     expanded_dir="$(eval echo ${path_dir}/$dir)"
 
     if [[ -d $expanded_dir ]]; then
+      log_debug "Using exact match of path_dir/dir (${path_dir}/$dir) from CDPATH"
       echo "$expanded_dir"
       return 0
     fi
 
     # New feature: intelligently figure out shortcuts. E.g. "ken" will match with kamaji-eliot-ness.
-    # Convert $dir to a regex. E.g. "ken" --> "^\./k[^-]*-e[^-]*-n[^-]*$"
-    local regex=$(echo $dir | sed -e 's/\(.\)/\1[^-]*-/g; s/-$/\$/; s/^/\^\\.\//1')
-    
+    # Convert $dir to a regex. E.g. "ken" --> "k[^-]*-e[^-]*-n[^-]*$"
+    # shellcheck disable=SC2001
+    regex=$(echo $dir | sed -e 's/\(.\)/\1[^-]*-/g')
+    log_debug "First substitution: $regex"
+    # shellcheck disable=SC2001
+    regex=$(echo $regex | sed -e 's/-$/\$/')
+    log_debug "2nd: $regex"
+
     # Use find to list files in the current directory that are directories.
-    pushd $path_dir >&/dev/null || { echo "Invalid dir in CDPATH: '$path_dir'"; return 1; }
-    local local_dir local_dirs=$(find . -maxdepth 1 -type d ! -name .)
+    pushd $path_dir >&/dev/null || { log "${RED}Invalid dir in CDPATH: '$path_dir'"; return 1; }
+    local_dirs=$(find . -maxdepth 1 -type d ! -name .)
 
     for local_dir in $local_dirs; do
-      echo "$local_dir" | grep "$regex" >& /dev/null
+      echo "$local_dir" | grep "^[.]/$regex" >& /dev/null
       # shellcheck disable=SC2181
       if [[ $? == 0 ]]; then
-        expanded_dir="$(eval echo ${path_dir}/$local_dir)"
+        # Remove the "./" prefix
+        local_dir="${local_dir/.\//}"
+        expanded_dir="$(eval echo ${path_dir}/$local_dir})"
+        log_debug "Using regex match of path_dir/dir (path_dir=${path_dir}, local_dir=$local_dir) from CDPATH"
         echo "$expanded_dir"
         # shellcheck disable=SC2164
         popd >& /dev/null
@@ -90,6 +131,7 @@ choosedir() {
     popd >& /dev/null
   done
 
+  log_debug "No match found for $dir"
   # Not found, so just echo the argument
   echo $dir
 }
@@ -120,23 +162,38 @@ py() { launch_ide pycharm "$1"; }
 gogo() { launch_ide goland "$1"; }
 
 myvi() {
-  # If running on a Mac, just run mvim with the supplied arguments.
-  is_mac && mvim "$@" && return
-
-  # On Windows/WSL, it's a tad more complicated...
-  local fixedargs
-
-  # Since gvim.exe is a Windows exe, need to convert any linux paths to \\wsl$\Ubuntu-18.04\...
-  for arg in "$@"; do
-    if [[ -n $(readlink "$arg") ]]; then
-      arg=$(readlink "$arg")
+  # If running on a Mac, just run mvim (MacVim) with the supplied arguments.
+  is_mac && {
+    # is MacVim installed?
+    if is_installed mvim; then
+      mvim "$@"
+    elif is_installed vim; then
+      vim "$@"
+    else
+      \vi "$@"
     fi
-    arg=$(windows_path "$arg")
+    return
+  }
 
-    fixedargs="$fixedargs $arg"
-  done
+  is_wsl && {
+    # On Windows/WSL, it's a tad more complicated...
+    local fixedargs
 
-  ( gvim.exe $fixedargs >&/dev/null & )
+    # Since gvim.exe is a Windows exe, need to convert any linux paths to \\wsl$\Ubuntu-18.04\...
+    for arg in "$@"; do
+      if [[ -n $(readlink "$arg") ]]; then
+        arg=$(readlink "$arg")
+      fi
+      arg=$(windows_path "$arg")
+
+      fixedargs="$fixedargs $arg"
+    done
+
+    ( gvim.exe $fixedargs >&/dev/null & )
+    return
+  }
+
+  \vi "$@"
 }
 
 # Yes/no prompt
@@ -170,7 +227,13 @@ ip6() {
 }
 
 log() {
-  echo -e "$(date +%T)" "$@"
+  echo -e "$(date +%T)" "$CYAN$*$NC" 2>&1
+}
+
+log_debug() {
+  # shellcheck disable=SC2154
+  [[ -n "$DEBUG" ]] &&
+    echo -e "$(date +%T)" "$cyan$*$NC" 2>&1
 }
 
 # Since 'in' is a keyword, using 'inn'.

@@ -2,10 +2,9 @@
 # Note: the hash-bang above was only added so that my IDE knows this is a bash script. But this script must be
 # sourced, not executed from the command line.
 
-# I've installed GNU date as "gdate" on the Mac and use it in the prompt. On WSL, "date" is already GNU date.
-command -v gdate >& /dev/null || alias gdate=date
-
-alias resource='source ~/.bash_profile'
+# Command to reload everything here file after I make changes.
+# shellcheck disable=SC2139
+alias resource="source $(dirname ${BASH_SOURCE[0]})/bashrc"
 
 # Use my "mycd" function instead of the cd command:
 alias cd='mycd'
@@ -13,25 +12,33 @@ alias cd='mycd'
 alias vi='myvi'
 
 # ls aliases
-if command -v eza >&/dev/null; then
+# I've installed "eza", a "modern replacement for ls" (https://github.com/eza-community/eza)
+if is_installed eza; then
+  alias l='eza -l -s name'
+  alias la='eza -la -s name'        # show hidden files
+  alias lx='eza -l -s ext'         # sort by extension
+  alias lt='eza -l -s date'        # sort by date, most recent last
+  alias lz='eza -l -s size'        # sort by size, largest last.
+  alias ldirs='eza -lD -s name'
+  alias nodirs='eza -l --only-files -s name'
+else
   alias l='ls -G -l'
-  alias ldirs='ls -lG | grep "^d"'
   alias la='ls -G -Al'          # show hidden files
   alias lx='ls -G -lXB'         # sort by extension
   alias lt='ls -G -ltr'         # sort by date, most recent last
   alias lz='ls -G -lSr'         # sort by size, largest last.
+  alias ldirs='ls -lG | grep "^d"'
   alias nodirs='l | gv "^[ld]" | gv "^total"'
-else
-  alias l='eza -l -s name'
-  alias ldirs='eza -lD -s name'
-  alias la='eza -la -s name'
-  alias lx='eza -l -s ext'         # sort by extension
-  alias lt='eza -l -s date'        # sort by date, most recent last
-  alias lz='eza -l -s size'        # sort by size, largest last.
-  alias nodirs='eza -l --only-files -s name'
 fi
 
-# Misc aliases
+# I've also installed "bat", an enhanced "cat"
+is_installed bat && alias cat=bat
+
+###
+### Misc aliases
+###
+
+# Shortcut for grep
 alias g='grep -s'
 # grep -i == ignore case
 alias gi='grep -si'
@@ -43,12 +50,10 @@ alias gil='grep -sil'
 alias gv='grep -sv'
 alias md='mkdir -p'
 alias rd='rmdir'
-alias x='exit'
 # Show my $PATH, but one directory per line
 alias path='echo -e ${PATH//:/\\n}'
 alias pd=pushd
 alias pp=popd
-alias mj4='make -j4'
 # Echo without a newline
 alias en='echo -n'
 # Convenient short form of the find command
@@ -68,7 +73,9 @@ alias p="ping -c 1"
 alias k9='kill -9'
 # List zip contents (verbosely)
 alias uv='unzip -v'
+# Print a number in hex
 alias hex='printf "0x%08x\n"'
+# Print a hex number in decimal (must use 0x prefix)
 alias dec='printf "%d\n"'
 alias le=less
 # Stop shouting at me, uuidgen!
@@ -77,8 +84,13 @@ alias uuidgen='uuidgen | tr "[:upper:]" "[:lower:]"'
 alias reverse='tail -r'
 # Curl with newline
 alias curlnl='curl -w "\n"'
+# Show current UTC time
+alias utctime='date -u'
+alias gw='./gradlew'
 
-# Convenient shortcuts for selecting the nth word of output.
+###
+### Convenient shortcuts for selecting the nth word of output.
+###
 alias awk1="awk '{print \$1}'"
 alias awk2="awk '{print \$2}'"
 alias awk3="awk '{print \$3}'"
@@ -90,12 +102,9 @@ alias awk8="awk '{print \$8}'"
 alias awk9="awk '{print \$9}'"
 alias awklast="awk '{print \$NF}'"
 
-# Friendly wrappers for od
-alias od-char='od -c'
-alias od-hex='od -t x1'
-alias od-hexword='od -x'
-
-# Git aliases
+###
+### Git aliases
+###
 alias gst='git status'
 alias gcm='git commit'
 alias gpush='git push origin'
@@ -106,7 +115,9 @@ alias gurl='git-url.sh'
 alias cdjnl='pushd ~/OneDrive/Documents/jnl'
 alias cdicloud='pushd "${ICLOUD_DIR}"'
 
-# sk8s aliases
+###
+### sk8s aliases
+###
 alias s='~/mysrc/sk8s/target/debug/sk8s'
 alias 8l='sk8s login'
 alias 8h='sk8s health'
@@ -115,7 +126,9 @@ alias 8rp='sk8s restart-pods'
 alias 8wp='sk8s watch-pods'
 alias 8dv='sk8s deploy-version'
 
-# Skuba aliases
+###
+### Skuba aliases
+###
 alias sk='skuba kubectl'
 alias skh='skuba helm'
 alias po='sk get pods'
@@ -125,19 +138,17 @@ alias skdelstalereplicas='sk delete replicaset `sk get replicaset | g " 0  *0  *
 alias clus='skuba cluster'
 alias ns='skuba namespace'
 
-# Docker aliases
+###
+### Docker aliases
+###
 alias dcls='docker container ls'
 alias dils='docker image ls'
 alias dcstopall='docker container stop `dcls | tail -n +2 | awk1`'
 
-alias gw='./gradlew'
-
-alias cat=bat
-
 # SSH to my 3D Printer's Raspberry Pi:
 alias sshpi='ssh -i ~/.ssh/jafischer.pem pi@fluidpi.local'
 
-alias utctime='date -u'
-
-# Stuff the incredibly annoying "--add-opens" options into the clipboard
-alias add-opens='echo -n "-ea --add-opens java.base/jdk.internal.loader=ALL-UNNAMED --add-opens java.base/java.util.concurrent=ALL-UNNAMED --add-opens java.management/java.lang.management=ALL-UNNAMED --add-opens java.base/java.time=ALL-UNNAMED --add-opens java.base/java.lang.reflect=ALL-UNNAMED" | pbcopy'
+# Friendly wrappers for od
+alias od-char='od -c'
+alias od-hex='od -t x1'
+alias od-hexword='od -x'
