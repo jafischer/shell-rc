@@ -1,0 +1,32 @@
+#!/bin/bash
+# Note: the hash-bang above was only added so that my IDE knows this is a bash script. But this script must be
+# sourced, not executed from the command line.
+
+# Some functions to determine what system we're running on (I use the same bash scripts on Windows/WSL and
+# the Mac.
+# They're not in the "functions" file because they are used in "aliases", but "aliases" must be sourced
+# before "functions" (since some functions use the aliases)...
+
+is_mac() {
+  [[ $(uname) == "Darwin" ]]
+}
+
+is_linux() {
+  [[ $(uname) == "Linux" ]]
+}
+
+is_wsl() {
+  is_linux && [[ -d /mnt/c ]]
+}
+
+my_os() {
+  if is_mac; then
+    echo mac
+  elif is_wsl; then
+    echo wsl
+  elif is_linux; then
+    echo linux
+  else
+    echo unknown-os
+  fi
+}

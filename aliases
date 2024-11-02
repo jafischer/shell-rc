@@ -11,11 +11,17 @@ alias cd='mycd'
 # Ditto for vi
 alias vi='myvi'
 
+# Dang circular dependencies... I'll define is_installed here as well
+# Determine if a command is installed
+is_installed() {
+  command -v $1 >&/dev/null
+}
+
 # ls aliases
 # I've installed "eza", a "modern replacement for ls" (https://github.com/eza-community/eza)
 if is_installed eza; then
   alias l='eza -l -s name'
-  alias la='eza -la -s name'        # show hidden files
+  alias la='eza -la -s name'       # show hidden files
   alias lx='eza -l -s ext'         # sort by extension
   alias lt='eza -l -s date'        # sort by date, most recent last
   alias lz='eza -l -s size'        # sort by size, largest last.
@@ -37,7 +43,6 @@ is_installed bat && alias cat=bat
 ###
 ### Misc aliases
 ###
-
 # Shortcut for grep
 alias g='grep -s'
 # grep -i == ignore case
@@ -79,13 +84,16 @@ alias hex='printf "0x%08x\n"'
 alias dec='printf "%d\n"'
 alias le=less
 # Stop shouting at me, uuidgen!
-alias uuidgen='uuidgen | tr "[:upper:]" "[:lower:]"'
+# Convert uppercase uuid to lowercase. Also, strip the trailing newline so I can more
+# easily paste into code. (e.g. "uuidgen | pbcopy")
+alias uuidgen='echo -n $(\uuidgen | tr "[:upper:]" "[:lower:]")'
 # Reverse the lines of a file.
 alias reverse='tail -r'
 # Curl with newline
 alias curlnl='curl -w "\n"'
 # Show current UTC time
 alias utctime='date -u'
+# Shorter way of running the ubiquitous gradle build script.
 alias gw='./gradlew'
 
 ###
@@ -110,14 +118,15 @@ alias gcm='git commit'
 alias gpush='git push origin'
 alias gpull='git fetch --prune; git pull'
 alias gchmod='git update-index --chmod=+x'
-alias gurl='git-url.sh'
+# See https://github.sie.sony.com/SIE/safety-scripts/blob/main/git-url.sh
+is_installed git-url.sh && alias gurl='git-url.sh'
 
-alias cdjnl='pushd ~/OneDrive/Documents/jnl'
 alias cdicloud='pushd "${ICLOUD_DIR}"'
 
 ###
-### sk8s aliases
+### sk8s aliases (see
 ###
+
 alias s='~/mysrc/sk8s/target/debug/sk8s'
 alias 8l='sk8s login'
 alias 8h='sk8s health'

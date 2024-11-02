@@ -12,15 +12,13 @@ set nowrapscan          " Don't automatically wrap to the start of the file when
 set shiftwidth=2        " I mostly use vi for editing scripts, not C++, so indent by 2
 set tabstop=8
 set autoindent
-"set textwidth=120
 set textwidth=0
 set expandtab           " Insert spaces when tab key is pressed
 set showmatch           " Highlight matching brace, paren, etc.
-set history=50		" keep 50 lines of command line history
-set ruler		" show the cursor position all the time
-set showcmd		" display incomplete commands
-set incsearch		" do incremental searching
-set scrolloff=5         " Keep 5 lines above & below current line visible.
+set history=50          " keep 50 lines of command line history
+set ruler               " show the cursor position all the time
+set showcmd             " display incomplete commands
+set incsearch           " do incremental searching
 set number              " Show line numbers.
 set wrap
 

@@ -19,11 +19,13 @@ bashrc_aliases_and_functions() {
   # Aliases and functions
   #-------------------------------------------------------------
   # Must call `functions` first because `aliases` uses is_mac/is_wsl etc.
-  source "$(dirname ${BASH_SOURCE[0]})/functions"
+  source "$(dirname ${BASH_SOURCE[0]})/osfuncs"
   source "$(dirname ${BASH_SOURCE[0]})/aliases"
+  source "$(dirname ${BASH_SOURCE[0]})/functions"
   source "$(dirname ${BASH_SOURCE[0]})/completion"
 }
 
+### PERSONALIZE THIS
 bashrc_set_path() {
   local my_path
 
@@ -38,6 +40,9 @@ bashrc_set_path() {
   fi
 
   # Add components to path one at a time, just for readability.
+  # I have both ~/bin for scripts, and ~/bin/binaries for binary executables; this is
+  # because I'll often grep for something in ~/bin/* and grep can be really slow when searching
+  # large binary files...
   my_path="$HOME/bin/binaries"
   my_path="$my_path:$HOME/bin"
   my_path="$my_path:$HOME/src/safety-scripts"
@@ -99,6 +104,7 @@ bashrc_color_variables() {
   #-------------------------------------------------------------
   # Define some variables containing ANSI escape sequences
   # that we can use with "echo -e" to get colorful output.
+  # E.g. echo -e "Hello, ${GREEN}world${NC}"
   #-------------------------------------------------------------
   black='\x1b[0;30m'; red='\x1b[0;31m'; green='\x1b[0;32m'; yellow='\x1b[0;33m'; blue='\x1b[0;34m'; pink='\x1b[0;35m'; cyan='\x1b[0;36m'; grey='\x1b[0;37m';
   BLACK='\x1b[1;30m'; RED='\x1b[1;31m'; GREEN='\x1b[1;32m'; YELLOW='\x1b[1;33m'; BLUE='\x1b[1;34m'; PINK='\x1b[1;35m'; CYAN='\x1b[1;36m'; WHITE='\x1b[1;37m'
@@ -115,7 +121,12 @@ bashrc_setup_history(){
   # histreedit: user is given the opportunity to re-edit a failed history substitution
   # histverify: the results of history substitution are not immediately executed; user must press enter.
   shopt -s cmdhist histappend histreedit histverify
+
+  ### PERSONALIZE THIS
+  # I keep my history in a (private) git repository because I've had too many instances where somehow my
+  # entire bash history file gets cleared.
   HISTFILE="$HOME/mysrc/bash-history/history-$(hostname)"
+
   HISTTIMEFORMAT="%F %T "
   # ignorespace: preceding a command with a space will omit it from the history.
   # ignoredups: causes lines which match the previous history entry to not be saved
@@ -192,19 +203,25 @@ bashrc_setup_prompt() {
   PS1=$PS1_dir$PS1_branch$PS1_ns$PS1_timestamp' \$ '
 }
 
+### PERSONALIZE THIS
 bashrc_set_variables() {
   #-------------------------------------------------------------
   # Set some environment variables (the ones with "export") and
   # some variables used in my aliases and functions.
   #-------------------------------------------------------------
+  # Set SRC_DIR to the location of your git repos.
   SRC_DIR=~/src
   is_wsl && SRC_DIR=/mnt/c/Users/jafischer/src
+  # If you don't have iCloud storage, ignore this
   ICLOUD_DIR="$HOME/Library/Mobile Documents/com~apple~CloudDocs"
   is_wsl && ICLOUD_DIR=/mnt/c/Users/jafischer/iCloudDrive
 
-  # JavaVirtualMachines/current is a symlink to whatever version of the JDK
-  # I'm currently using (see the "jdk" function in ./functions)
+  # When you download and install the "Corretto" version of java, it installs into
+  # /Library/Java/JavaVirtualMachines/amazon-corretto-NN.jdk, so I make a symlink
+  # called "current" to whatever version of the JDK I'm using
+  # (see the "jdk" function in ./functions).
   export JAVA_HOME=/Library/Java/JavaVirtualMachines/current/Contents/Home
+  # TODO: add JAVA_HOME for WSL
 
   # Vi forever!
   export EDITOR=vim
@@ -213,6 +230,7 @@ bashrc_set_variables() {
   export GOROOT=~/go/go1.21.5
 }
 
+### PERSONALIZE THIS
 bashrc_finish_up() {
   #-------------------------------------------------------------
   # Miscellaneous
@@ -220,16 +238,17 @@ bashrc_finish_up() {
 
   # Just in case I ever forget after adding a new file under .ssh or .secrets.
   # All files in those directories should be only readable by me.
-  chmod -R og-rwx ~/.ssh ~/.secrets
+  chmod -R og-rwx ~/.ssh
+  [[ -d ~/.secrets ]] && chmod -R og-rwx ~/.secrets
+
+  # Many tools will add something like the following commands to the end of your .bash_profile file.
+  # Move them here.
 
   # shellcheck disable=SC1090
   source ~/.cargo/env
   # Gimme-aws-creds: credentials for AWS (https://github.sie.sony.com/SIE/gimme-aws-creds)
   # shellcheck disable=SC1090
   source ~/.gimme-aws-creds-xaws
-
-  # fzf: Fuzzy finder (https://github.com/junegunn/fzf)
-  is_installed fzf && eval "$(fzf --bash)"
 
   # Convert ~ to $HOME in PATH. Do this at the end to account for paths added by any sourced scripts above.
   export PATH="${PATH//\~/$HOME}"
