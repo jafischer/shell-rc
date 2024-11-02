@@ -18,7 +18,7 @@ bashrc_aliases_and_functions() {
   #-------------------------------------------------------------
   # Aliases and functions
   #-------------------------------------------------------------
-  # Must call `functions` first because `aliases` uses is_mac/is_wsl etc.
+  # Must call `osfuncs` first because `aliases` uses is_mac/is_wsl etc.
   source "$(dirname ${BASH_SOURCE[0]})/osfuncs"
   source "$(dirname ${BASH_SOURCE[0]})/aliases"
   source "$(dirname ${BASH_SOURCE[0]})/functions"
