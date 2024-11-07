@@ -4,25 +4,17 @@
 
 # Define a bunch of functions for organization & readability, then call "bashrc_main" at the end to kick it all off.
 bashrc_main() {
-  bashrc_aliases_and_functions
+  # Must call `functions` first is_mac/is_wsl are used all over the place.
+  source "$(dirname ${BASH_SOURCE[0]})/osfuncs"
+
   bashrc_set_path
+  bashrc_aliases_and_functions
   bashrc_shell_settings
   bashrc_color_variables
   bashrc_setup_history
   bashrc_setup_prompt
   bashrc_set_variables
   bashrc_finish_up
-}
-
-bashrc_aliases_and_functions() {
-  #-------------------------------------------------------------
-  # Aliases and functions
-  #-------------------------------------------------------------
-  # Must call `functions` first because `aliases` uses is_mac/is_wsl etc.
-  source "$(dirname ${BASH_SOURCE[0]})/osfuncs"
-  source "$(dirname ${BASH_SOURCE[0]})/aliases"
-  source "$(dirname ${BASH_SOURCE[0]})/functions"
-  source "$(dirname ${BASH_SOURCE[0]})/completion"
 }
 
 ### PERSONALIZE THIS
@@ -68,6 +60,15 @@ bashrc_set_path() {
 
   # Paths for the cd command to search.
   CDPATH="$HOME/src:$HOME/mysrc:$HOME/3rdparty:$HOME/OneDrive/Documents:$HOME"
+}
+
+bashrc_aliases_and_functions() {
+  #-------------------------------------------------------------
+  # Aliases and functions
+  #-------------------------------------------------------------
+  source "$(dirname ${BASH_SOURCE[0]})/aliases"
+  source "$(dirname ${BASH_SOURCE[0]})/functions"
+  source "$(dirname ${BASH_SOURCE[0]})/completion"
 }
 
 bashrc_shell_settings() {
@@ -185,12 +186,12 @@ bashrc_setup_prompt() {
   # Oddly, on MacOS, "echo -e" doesn't accept \e. It requires \x1b instead.
   # BUT... the PS1 prompt understands \e, and not \x1b...
   # So in other words I can't use the color variables I've defined.
-  PS1_dir='[\e[1;33mdir: \e[1;34m\w\e[0m] '
+  PS1_dir='[\e[1;33mdir: \e[1;36m\w\e[0m] '
   if [[ "$TERM_PROGRAM" == "Apple_Terminal" ]]; then
     # shellcheck disable=SC2016
-    PS1_branch='[\e[1;33mbranch: \e[1;34m$(git status 2>&1 | sed -e "s|fatal:.*|On branch: N/A|" | grep "On branch" | cut -f 3 -d" ")\e[0m] '
+    PS1_branch='[\e[1;33mbranch: \e[1;36m$(git status 2>&1 | sed -e "s|fatal:.*|On branch: N/A|" | grep "On branch" | cut -f 3 -d" ")\e[0m] '
     # shellcheck disable=SC2016
-    PS1_ns='[\e[1;33mns: \e[1;34m$(kubectl config view --minify -o jsonpath="{..namespace}")\e[0m]\n'
+    PS1_ns='[\e[1;33mns: \e[1;36m$(kubectl config view --minify -o jsonpath="{..namespace}")\e[0m]\n'
     # `brew install coreutils` to get gdate
     if is_installed gdate; then
       # shellcheck disable=SC2016
