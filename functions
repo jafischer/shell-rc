@@ -27,6 +27,13 @@ up() {
 # Example:
 # $ choosedir crc
 # /Users/jafischer/src/capone-report-collector
+#
+# Here are the methods used to find a match (if a directory with the exact name isn't found)
+#
+# 1. A list of personalized shortcuts, e.g. "en" for my "kamaji-eliot-ness" repo.
+# 2. Since most of our git repos consist of multiple words seperated by hyphens, do a fuzzy search in $CDPATH
+#    using each letter as the start of a word. In other words, "crc" will match "capone-report-collector",
+#    "ken" will match "kamaji-eliot-ness", and so on.
 choosedir() {
   local dir="$1" path_dir expanded_dir regex local_dir local_dirs
 
@@ -41,6 +48,7 @@ choosedir() {
   ! is_absolute_path "$1" && [[ -d "./$dir" ]] && { echo "./$dir"; return 0; }
 
   # Check list of shortcuts for some frequent destinations:
+  ### PERSONALIZE THIS
   case $dir in
     en)   echo "$SRC_DIR/kamaji-eliot-ness"; return 0 ;;
     ga)   echo "$SRC_DIR/kamaji-garbo"; return 0 ;;
@@ -62,7 +70,9 @@ choosedir() {
     pa2)  echo "$SRC_DIR/presidio-anonymizer"; return 0 ;;
   esac
 
-  # Search for the directory in $CDPATH.
+  # Search for the directory in $CDPATH. (Note: we don't actually have to do this, since the cd
+  # command will automatically use CDPATH, but we're searching CDPATH anyway for the fuzzy match; and also we
+  # use this for the launch_ide function as well).
   for path_dir in ${CDPATH//:/ }; do
     # The added "eval" is there to expand ~ into the home dir.
     path_dir="$(eval echo ${path_dir})"
@@ -74,8 +84,10 @@ choosedir() {
       return 0
     fi
 
-    # New feature: intelligently figure out shortcuts. E.g. "ken" will match with kamaji-eliot-ness.
-    # Convert $dir to a regex. E.g. "ken" --> "k[^-]*-e[^-]*-n[^-]*$"
+    # Fuzzy search: e.g. "ken" will match with kamaji-eliot-ness.
+    # So we want to convert the letters in "$dir" to a regular expression
+    # that will find hyphenated words starting with each letter.
+    # E.g. "ken" --> "k[^-]*-e[^-]*-n[^-]*$"
     # shellcheck disable=SC2001
     regex=$(echo $dir | sed -e 's/\(.\)/\1[^-]*-/g')
     log_debug "First substitution: $regex"
