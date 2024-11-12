@@ -12,7 +12,7 @@ source ~/src/bashrc/bashrc
 
 ## Feel Free to Use This!
 
-You can git clone this somewhere, and add the same `source` statement from
+You can git clone this somewhere, and add a similar `source` statement from
 above to your own `.bash_profile`.
 
 I've taken great pains to make this as general-purpose as possible. But there
@@ -67,8 +67,8 @@ repos, with usually a 2 or 3 letter shortcut.
 
 ## 3rd-Party Tools
 
-If any of the functions or aliases rely on a custom utility that I've installed, I prefix it
-with a test to see if it's installed.
+If any of the functions or aliases rely on a custom utility that I've installed,
+I prefix it with an `is_installed` test to see if it's installed.
 
 Here is a list of such utilities:
 - `eza`, a "modern replacement for ls" (https://github.com/eza-community/eza)
@@ -83,4 +83,5 @@ Why the "bashrc" name? It's just an ancient Unix convention (pre-dating Unix eve
 
 > The ‘rc’ suffix goes back to Unix's grandparent, CTSS. 
 > It had a command-script feature called "runcom". 
-> Early Unixes used ‘rc’ for the name of the operating system's boot script, as a tribute to CTSS runcom.
+> Early Unixes used ‘rc’ for the name of the operating system's boot script,
+> as a tribute to CTSS runcom.
