@@ -59,7 +59,7 @@ bashrc_set_path() {
   export PATH="$ORIG_PATH:$my_path"
 
   # Paths for the cd command to search.
-  CDPATH="$HOME/src:$HOME/mysrc:$HOME/3rdparty:$HOME/OneDrive/Documents:$HOME"
+  export CDPATH="$HOME/src:$HOME/mysrc:$HOME/3rdparty:$HOME/OneDrive/Documents:$HOME"
 }
 
 bashrc_aliases_and_functions() {
