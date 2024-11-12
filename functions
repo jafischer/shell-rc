@@ -93,7 +93,7 @@ choosedir() {
       if [[ $? == 0 ]]; then
         # Remove the "./" prefix
         local_dir="${local_dir/.\//}"
-        expanded_dir="$(eval echo ${path_dir}/$local_dir})"
+        expanded_dir="$(eval echo ${path_dir}/$local_dir)"
         log_debug "Using regex match of path_dir/dir (path_dir=${path_dir}, local_dir=$local_dir) from CDPATH"
         echo "$expanded_dir"
         # shellcheck disable=SC2164
@@ -405,10 +405,21 @@ xa() {
   if [[ -z $role ]]; then
     xaws Aloy
   else
-    xaws Aloy 2>&1 |
+    # Learn something new every day. The "2> >(...)" syntax redirects ONLY
+    # stderr to the process within the parentheses.
+    xaws Aloy 2> >(
       # This funky perl line is just to get the desired role highlighted.
       # And we're using Perl rather than sed because OSX sed doesn't support \x, but perl does!
       perl -p -e "s/Account:/\x1b\[0mAccount:/; s/(Account: .*$role)/\x1b\[1;32m\$1/"
+    )
   fi
 }
 
+# Creates a new script in ~/bin and chmod's it
+newscript() {
+  local name="$HOME/bin/$1"
+  echo -e "#!/bin/bash\n" > "$name"
+  chmod +x "$name"
+  # + option means go to last line
+  vi + "$name"
+}
