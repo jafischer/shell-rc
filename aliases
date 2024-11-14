@@ -11,7 +11,8 @@ alias cd='mycd'
 # Ditto for vi
 alias vi='myvi'
 
-# Dang circular dependencies... I'll define is_installed here as well
+# Dang circular dependencies... I'll just define is_installed here as well, since
+# we need to source "aliases" before "functions".
 # Determine if a command is installed
 is_installed() {
   command -v $1 >&/dev/null
@@ -37,13 +38,13 @@ else
   alias nodirs='l | gv "^[ld]" | gv "^total"'
 fi
 
-# I've also installed "bat", an enhanced "cat"
+# I've also installed "bat", an enhanced "cat" and "less" combined.
 is_installed bat && alias cat=bat
 
 ###
 ### Misc aliases
 ###
-# Shortcut for grep
+# Shortcut for grep ("-s" means suppress error messages about directories and such)
 alias g='grep -s'
 # grep -i == ignore case
 alias gi='grep -si'
@@ -53,6 +54,13 @@ alias gl='grep -sl'
 alias gil='grep -sil'
 # grep -v == show everything BUT the matching lines
 alias gv='grep -sv'
+# In DOS/Windows, the mkdir command is "md", and when I'm switching back and forth I get confused...
+# Also I add the "-p" option to let you make multiple directory levels in one command:
+# $ md three/levels/deep
+# Instead of:
+# $ md three
+# $ md three/levels
+# $ md three/levels/deep
 alias md='mkdir -p'
 alias rd='rmdir'
 # Show my $PATH, but one directory per line
@@ -61,7 +69,7 @@ alias pd=pushd
 alias pp=popd
 # Echo without a newline
 alias en='echo -n'
-# Convenient short form of the find command
+# Convenient short form of the find command. Just "fnd SomeFilePattern".
 alias fnd='find . -name '
 # Show all processes owned by me
 alias pu='ps -fU $UID'
@@ -69,10 +77,12 @@ alias pu='ps -fU $UID'
 alias s0="sudo shutdown -h now"
 # Shutdown and restart
 alias sr0="sudo shutdown -r now"
+# Show disk usage of the directories under the current directory.
+# But note: I don't use this since installing ncdu (brew install ncdu). It's much nicer.
 alias du="\du -d 0 -m"
 # Directory usage for everything in the current dir, sorted.
 alias dus="du * | sort -n"
-# Quick ping
+# Quick ping (otherwise ping runs forever)
 alias p="ping -c 1"
 # Kill it dead
 alias k9='kill -9'
@@ -82,14 +92,13 @@ alias uv='unzip -v'
 alias hex='printf "0x%08x\n"'
 # Print a hex number in decimal (must use 0x prefix)
 alias dec='printf "%d\n"'
-alias le=less
 # Stop shouting at me, uuidgen!
 # Convert uppercase uuid to lowercase. Also, strip the trailing newline so I can more
 # easily paste into code. (e.g. "uuidgen | pbcopy")
 alias uuidgen='echo -n $(\uuidgen | tr "[:upper:]" "[:lower:]")'
 # Reverse the lines of a file.
 alias reverse='tail -r'
-# Curl with newline
+# Curl with newline added to the end of the output
 alias curlnl='curl -w "\n"'
 # Show current UTC time
 alias utctime='date -u'
@@ -124,16 +133,17 @@ is_installed git-url.sh && alias gurl='git-url.sh'
 alias cdicloud='pushd "${ICLOUD_DIR}"'
 
 ###
-### sk8s aliases (see
+### sk8s aliases (see https://github.sie.sony.com/jafischer/sk8s)
 ###
-
-alias s='~/mysrc/sk8s/target/debug/sk8s'
 alias 8l='sk8s login'
 alias 8h='sk8s health'
 alias 8pf='sk8s port-forward'
 alias 8rp='sk8s restart-pods'
 alias 8wp='sk8s watch-pods'
 alias 8dv='sk8s deploy-version'
+# This one's just for me while testing things:
+# run sk8s from my git repo instead of the one in my path.
+alias s='~/mysrc/sk8s/target/debug/sk8s'
 
 ###
 ### Skuba aliases
@@ -141,9 +151,6 @@ alias 8dv='sk8s deploy-version'
 alias sk='skuba kubectl'
 alias skh='skuba helm'
 alias po='sk get pods'
-alias sksh='skuba shell $(po | tail -n 1 | awk1)'
-alias skbashpod='sk run --rm=true -it test-bash-$(timestamp.sh) --restart=Never --image=761590636927.dkr.ecr.us-west-2.amazonaws.com/raptor/amazonlinux2:20190129T000000Z'
-alias skdelstalereplicas='sk delete replicaset `sk get replicaset | g " 0  *0  *0" | awk1`'
 alias clus='skuba cluster'
 alias ns='skuba namespace'
 
