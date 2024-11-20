@@ -132,7 +132,7 @@ mycd() {
 launch_ide() {
   local ide="$1" dir="$2"
 
-  ( $ide "$(choosedir "$dir")" >&/dev/null & sleep 7; layout )
+  ($ide "$(choosedir "$dir")" >&/dev/null &)
 }
 # ij for IntelliJ
 ij() { launch_ide idea "$1"; }
