@@ -422,7 +422,7 @@ xa() {
     xaws Aloy 2> >(
       # This funky perl line is just to get the desired role highlighted.
       # And we're using Perl rather than sed because OSX sed doesn't support \x, but perl does!
-      perl -p -e "s/Account:/\x1b\[0mAccount:/; s/(Account: .*$role)/\x1b\[1;32m\$1/"
+      perl -p -e "s/Account:/\x1b\[0mAccount:/; s/(Account: .*$role)/\x1b\[1;32m\$1/; s/Selections/\x1b\[0mSelections/"
     )
   fi
 }
