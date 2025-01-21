@@ -362,7 +362,7 @@ elif is_wsl; then
   {
     local p="$1"
 
-    is_linux || echo "ERROR: windows_path called on $(uname)"
+    is_wsl || echo "ERROR: windows_path called on $(uname)"
  
     # Change /mnt/c/ to /
     if [[ "$p" == "/mnt/"* ]]; then
@@ -377,7 +377,8 @@ elif is_wsl; then
       # Relative paths work as-is, because the windows process starts up with the Linux current directory.
       # Is this an absolute path?
       if [[ "$p" == "/"* ]]; then
-        p="//wsl\$/Ubuntu-18.04$p"
+        local ubuntu_version=$(lsb_release -a | grep Release: | awk2)
+        p="//wsl\$/Ubuntu-$ubuntu_version$p"
       fi
     fi
 

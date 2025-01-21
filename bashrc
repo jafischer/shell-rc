@@ -139,7 +139,9 @@ bashrc_setup_history(){
   HISTFILESIZE=50000
   # "history -a" causes all commands to be immediately appended to .bash_history, instead of only when the shell exits.
   # (useful for when using multiple terminal windows).
-  if [[ "$PROMPT_COMMAND" != *"history -a"* ]]; then
+  if [[ -z "$PROMPT_COMMAND" ]] ; then
+    PROMPT_COMMAND="history -a"
+  elif [[ "$PROMPT_COMMAND" != *"history -a"* ]]; then
     PROMPT_COMMAND="${PROMPT_COMMAND}; history -a"
   fi
 }
@@ -161,7 +163,7 @@ bashrc_setup_prompt() {
   # BUT... the PS1 prompt understands \e, and not \x1b...
   # So in other words I can't use the color variables I've defined.
   PS1_dir='[\e[1;33mdir: \e[1;36m\w\e[0m] '
-  if [[ "$TERM_PROGRAM" == "Apple_Terminal" ]]; then
+  if [[ "$TERM_PROGRAM" == "Apple_Terminal" || is_wsl ]]; then
     # shellcheck disable=SC2016
     PS1_branch='[\e[1;33mbranch: \e[1;36m$(git status 2>&1 | sed -e "s|fatal:.*|On branch: N/A|" | grep "On branch" | cut -f 3 -d" ")\e[0m] '
     # shellcheck disable=SC2016
