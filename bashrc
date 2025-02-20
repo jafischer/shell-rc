@@ -7,14 +7,45 @@ bashrc_main() {
   # Must call `functions` first is_mac/is_wsl are used all over the place.
   source "$(dirname ${BASH_SOURCE[0]})/osfuncs"
 
+  bashrc_set_variables
   bashrc_set_path
   bashrc_aliases_and_functions
   bashrc_shell_settings
   bashrc_color_variables
   bashrc_setup_history
   bashrc_setup_prompt
-  bashrc_set_variables
   bashrc_finish_up
+}
+
+### PERSONALIZE THIS
+bashrc_set_variables() {
+  #-------------------------------------------------------------
+  # Set some environment variables (the ones with "export") and
+  # some variables used in my aliases and functions.
+  #-------------------------------------------------------------
+  # Set SRC_DIR to the location of your git repos.
+  SRC_DIR=~/src
+  is_wsl && SRC_DIR=/mnt/c/Users/jafischer/src
+  MYSRC_DIR=~/mysrc
+  is_wsl && MYSRC_DIR=/mnt/c/Users/jafischer/mysrc
+  _3RDPARTY_DIR=~/3rdparty
+  is_wsl && _3RDPARTY_DIR=/mnt/c/Users/jafischer/3rdparty
+  # If you don't have iCloud storage, ignore this
+  ICLOUD_DIR="$HOME/Library/Mobile Documents/com~apple~CloudDocs"
+  is_wsl && ICLOUD_DIR=/mnt/c/Users/jafischer/iCloudDrive
+
+  # When you download and install the "Corretto" version of java, it installs into
+  # /Library/Java/JavaVirtualMachines/amazon-corretto-NN.jdk, so I make a symlink
+  # called "current" to whatever version of the JDK I'm using
+  # (see the "jdk" function in ./functions).
+  [[ -d /Library/Java/JavaVirtualMachines/current/Contents/Home ]] &&
+    export JAVA_HOME=/Library/Java/JavaVirtualMachines/current/Contents/Home
+
+  # Vi forever!
+  export EDITOR=vim
+  export EXINIT="source $HOME/.vimrc"
+
+  export GOROOT=~/go/go1.21.5
 }
 
 ### PERSONALIZE THIS
@@ -35,8 +66,8 @@ bashrc_set_path() {
   # I have both ~/bin for scripts, and ~/bin/binaries for binary executables; this is
   # because I'll often grep for something in ~/bin/* and grep can be really slow when searching
   # large binary files...
-  my_path="$HOME/bin/binaries"
-  my_path="$my_path:$HOME/bin"
+#  my_path="$HOME/bin/binaries"
+#  my_path="$my_path:$HOME/bin"
   my_path="$my_path:$HOME/src/safety-scripts"
   my_path="$my_path:$HOME/src/garbo-cpp/cmake-build-release"
   # Many of my repos have a scripts directory, and I'm tired of typing "./scripts/xxx"
@@ -52,14 +83,20 @@ bashrc_set_path() {
     my_path="$my_path:$HOME/go/bin"
     my_path="$my_path::/Users/jafischer/Library/Application Support/JetBrains/Toolbox/scripts"
   elif is_wsl; then
+    my_path="$my_path:/home/linuxbrew/.linuxbrew/bin"
     my_path="$my_path:/opt/apache-maven-3.6.3/bin"
   fi
 
   # Combine the paths above with ":" as separator:
-  export PATH="$ORIG_PATH:$my_path"
+  if is_wsl; then
+    # On WSL I want $HOME/bin/binaries:$HOME/bin at the front of the path.
+    export PATH="$HOME/bin/binaries:$HOME/bin:$ORIG_PATH:$my_path"
+  else
+    export PATH="$ORIG_PATH:$my_path"
+  fi
 
   # Paths for the cd command to search.
-  export CDPATH="$HOME/src:$HOME/mysrc:$HOME/3rdparty:$HOME/OneDrive/Documents:$HOME"
+  export CDPATH="$SRC_DIR:$MYSRC_DIR:$_3RDPARTY_DIR:$HOME/OneDrive/Documents:$HOME"
 }
 
 bashrc_aliases_and_functions() {
@@ -164,11 +201,25 @@ bashrc_setup_prompt() {
   # So in other words I can't use the color variables I've defined.
   PS1_dir='[\e[1;33mdir: \e[1;36m\w\e[0m] '
   if [[ "$TERM_PROGRAM" == "Apple_Terminal" || is_wsl ]]; then
+    ps1_branch() {
+      # Built-in BSD date doesn't do nanoseconds, so I installed gdate.
+      local t1=$(gdate +%s%N)
+      echo -n "$(git status 2>&1 | sed -e "s|fatal:.*|On branch: N/A|" | grep "On branch" | cut -f 3 -d' ')"
+      local t2=$(gdate +%s%N)
+      [[ -n $DEBUG ]] && echo " ($(((t2 - t1) / 1000000))ms)"
+    }
+    ps1_ns() {
+      # Built-in BSD date doesn't do nanoseconds, so I installed gdate.
+      local t1=$(gdate +%s%N)
+      echo -n "$(kubectl config view --minify -o jsonpath="{..namespace}")"
+      local t2=$(gdate +%s%N)
+      [[ -n $DEBUG ]] && echo " ($(((t2 - t1) / 1000000))ms)"
+    }
     # shellcheck disable=SC2016
     PS1_branch='[\e[1;33mbranch: \e[1;36m$(git status 2>&1 | sed -e "s|fatal:.*|On branch: N/A|" | grep "On branch" | cut -f 3 -d" ")\e[0m] '
     # shellcheck disable=SC2016
     PS1_ns='[\e[1;33mns: \e[1;36m$(kubectl config view --minify -o jsonpath="{..namespace}")\e[0m]\n'
-    # `brew install coreutils` to get gdate
+    # On the mac, `brew install coreutils` to get gdate
     if is_installed gdate; then
       # shellcheck disable=SC2016
       PS1_timestamp='$(gdate +%H:%M:%S.%3N)'
@@ -177,34 +228,13 @@ bashrc_setup_prompt() {
       PS1_timestamp='$(date +%H:%M:%S)'
     fi
   fi
-  PS1=$PS1_dir$PS1_branch$PS1_ns$PS1_timestamp' \$ '
-}
-
-### PERSONALIZE THIS
-bashrc_set_variables() {
-  #-------------------------------------------------------------
-  # Set some environment variables (the ones with "export") and
-  # some variables used in my aliases and functions.
-  #-------------------------------------------------------------
-  # Set SRC_DIR to the location of your git repos.
-  SRC_DIR=~/src
-  is_wsl && SRC_DIR=/mnt/c/Users/jafischer/src
-  # If you don't have iCloud storage, ignore this
-  ICLOUD_DIR="$HOME/Library/Mobile Documents/com~apple~CloudDocs"
-  is_wsl && ICLOUD_DIR=/mnt/c/Users/jafischer/iCloudDrive
-
-  # When you download and install the "Corretto" version of java, it installs into
-  # /Library/Java/JavaVirtualMachines/amazon-corretto-NN.jdk, so I make a symlink
-  # called "current" to whatever version of the JDK I'm using
-  # (see the "jdk" function in ./functions).
-  export JAVA_HOME=/Library/Java/JavaVirtualMachines/current/Contents/Home
-  # TODO: add JAVA_HOME for WSL
-
-  # Vi forever!
-  export EDITOR=vim
-  export EXINIT="source $HOME/.vimrc"
-
-  export GOROOT=~/go/go1.21.5
+  # TODO: only add these if the time they take is < 250ms?
+  # For now, omit branch and namespace on WSL because they're just too slow.
+  if is_wsl; then
+    PS1=$PS1_dir'\n'$PS1_timestamp' \$ '
+  else
+    PS1=$PS1_dir$PS1_branch$PS1_ns'\n'$PS1_timestamp' \$ '
+  fi
 }
 
 ### PERSONALIZE THIS

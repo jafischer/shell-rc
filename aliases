@@ -4,7 +4,7 @@
 
 # Command to reload everything here file after I make changes.
 # shellcheck disable=SC2139
-alias resource="source $(dirname ${BASH_SOURCE[0]})/bashrc"
+alias reload="source $(dirname ${BASH_SOURCE[0]})/bashrc"
 
 # Use my "mycd" function instead of the cd command:
 alias cd='mycd'
@@ -168,3 +168,10 @@ alias sshpi='ssh -i ~/.ssh/jafischer.pem pi@fluidpi.local'
 alias od-char='od -c'
 alias od-hex='od -t x1'
 alias od-hexword='od -x'
+
+if is_wsl; then
+  # GNU date is the default on Linux.
+  alias gdate=date
+  # For some reason running the windows git.exe is significantly faster than running the linux git binary.
+  alias git=git.exe
+fi

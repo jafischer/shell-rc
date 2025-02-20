@@ -132,7 +132,13 @@ mycd() {
 launch_ide() {
   local ide="$1" dir="$2"
 
-  ($ide "$(choosedir "$dir")" >&/dev/null &)
+  dir="$(choosedir "$dir")"
+  if ! [[ -d "$dir" ]]; then
+    echo "$dir not found"
+    return 1
+  fi
+  is_wsl && dir="$(windows_path "$dir")"
+  ($ide "$dir" >&/dev/null &)
 }
 # ij for IntelliJ
 ij() { launch_ide idea "$1"; }
