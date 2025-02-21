@@ -163,7 +163,7 @@ bashrc_setup_history(){
   ### PERSONALIZE THIS
   # I keep my history in a (private) git repository because I've had too many instances where somehow my
   # entire bash history file gets cleared.
-  HISTFILE="$HOME/mysrc/bash-history/history-$(hostname)"
+  HISTFILE="$HOME/mysrc/bash-history/history-$(my_os)"
 
   HISTTIMEFORMAT="%F %T "
   # ignorespace: preceding a command with a space will omit it from the history.
