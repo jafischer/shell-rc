@@ -218,7 +218,7 @@ bashrc_setup_prompt() {
     # shellcheck disable=SC2016
     PS1_branch='[\e[1;33mbranch: \e[1;36m$(git status 2>&1 | sed -e "s|fatal:.*|On branch: N/A|" | grep "On branch" | cut -f 3 -d" ")\e[0m] '
     # shellcheck disable=SC2016
-    PS1_ns='[\e[1;33mns: \e[1;36m$(kubectl config view --minify -o jsonpath="{..namespace}")\e[0m]\n'
+    PS1_ns='[\e[1;33mns: \e[1;36m$(kubectl config view --minify -o jsonpath="{..namespace}")\e[0m]'
     # On the mac, `brew install coreutils` to get gdate
     if is_installed gdate; then
       # shellcheck disable=SC2016
