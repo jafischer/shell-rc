@@ -124,7 +124,12 @@ choosedir() {
 
 mycd() {
   # shellcheck disable=SC2164
-  \cd "$(choosedir "$1")"
+  if \cd "$(choosedir "$1")"; then
+    if [[ -d ./.git ]] && ! [[ -e ./.git/hooks/pre-commit ]] && [[ -d "$SRC_DIR/safety-scripts" ]]; then
+      log "Copying git hooks from $SRC_DIR/safety-scripts/git-hooks"
+      cp "$SRC_DIR/safety-scripts"/git-hooks/* .git/hooks
+    fi
+  fi
 }
 
 # Functions for launching an IDE on a project directory, using the same logic as
@@ -195,13 +200,6 @@ ask() {
     y*|Y*) return 0 ;;
     *) return 1 ;;
   esac
-}
-
-# Get name of app that created a corefile.
-corename() {
-  for file ; do
-    echo -n $file : ; gdb --core=$file --batch | head -1
-  done
 }
 
 # Extract just the ipv4 addresses from ifconfig output
@@ -331,7 +329,7 @@ if is_mac; then
 
   # Launch DiffMerge
   dm() {
-    ( /Users/jafischer/Applications/DiffMerge.app/Contents/MacOS/DiffMerge "$@" >&/dev/null & )
+    ( /Applications/DiffMerge.app/Contents/MacOS/DiffMerge "$@" >&/dev/null & )
   }
 
 elif is_wsl; then
