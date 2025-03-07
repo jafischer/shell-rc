@@ -175,3 +175,5 @@ if is_wsl; then
   # For some reason running the windows git.exe is significantly faster than running the linux git binary.
   alias git=git.exe
 fi
+
+alias cfmt='cargo +nightly fmt'
