@@ -30,8 +30,14 @@ bashrc_set_variables() {
   is_wsl && MYSRC_DIR=/mnt/c/Users/jafischer/mysrc
   _3RDPARTY_DIR=~/3rdparty
   is_wsl && _3RDPARTY_DIR=/mnt/c/Users/jafischer/3rdparty
+
   # If you don't have iCloud storage, ignore this
-  ICLOUD_DIR="$HOME/Library/Mobile Documents/com~apple~CloudDocs"
+  if [[ -d "$HOME/Library/Mobile Documents/com~apple~CloudDocs" ]]; then
+    if ! [[ -e $HOME/iCloudDrive ]]; then
+      ln -s "$HOME/Library/Mobile Documents/com~apple~CloudDocs" $HOME/iCloudDrive
+    fi
+  fi
+  ICLOUD_DIR=$HOME/iCloudDrive
   is_wsl && ICLOUD_DIR=/mnt/c/Users/jafischer/iCloudDrive
 
   # When you download and install the "Corretto" version of java, it installs into
@@ -63,17 +69,13 @@ bashrc_set_path() {
   fi
 
   # Add components to path one at a time, just for readability.
-  # I have both ~/bin for scripts, and ~/bin/binaries for binary executables; this is
-  # because I'll often grep for something in ~/bin/* and grep can be really slow when searching
-  # large binary files...
-#  my_path="$HOME/bin/binaries"
-#  my_path="$my_path:$HOME/bin"
-  my_path="$my_path:$HOME/src/safety-scripts"
-  my_path="$my_path:$HOME/src/garbo-cpp/cmake-build-release"
-  # Many of my repos have a scripts directory, and I'm tired of typing "./scripts/xxx"
-  my_path="$my_path:./scripts"
 
   if is_mac; then
+    # I have both ~/bin for scripts, and ~/bin/binaries for binary executables; this is
+    # because I'll often grep for something in ~/bin/* and grep can be really slow when searching
+    # large binary files...
+    my_path="$HOME/bin/binaries"
+    my_path="$my_path:$HOME/bin"
     my_path="$my_path:/usr/local/mysql/bin"
     my_path="$my_path:/opt/homebrew/bin"
     my_path="$my_path:/Library/Java/JavaVirtualMachines/current/Contents/Home/bin"
@@ -87,6 +89,11 @@ bashrc_set_path() {
     my_path="$my_path:/opt/apache-maven-3.6.3/bin"
   fi
 
+  my_path="$my_path:$HOME/src/safety-scripts"
+  my_path="$my_path:$HOME/src/garbo-cpp/cmake-build-release"
+  # Many of my repos have a scripts directory, and I'm tired of typing "./scripts/xxx"
+  my_path="$my_path:./scripts"
+
   # Combine the paths above with ":" as separator:
   if is_wsl; then
     # On WSL I want $HOME/bin/binaries:$HOME/bin at the front of the path.
@@ -96,7 +103,7 @@ bashrc_set_path() {
   fi
 
   # Paths for the cd command to search.
-  export CDPATH="$SRC_DIR:$MYSRC_DIR:$_3RDPARTY_DIR:$HOME/OneDrive/Documents:$HOME"
+  export CDPATH="$SRC_DIR:$MYSRC_DIR:$_3RDPARTY_DIR:$HOME/OneDrive/Documents:$ICLOUD_DIR/Documents:$HOME"
 }
 
 bashrc_aliases_and_functions() {
@@ -136,6 +143,8 @@ bashrc_shell_settings() {
   shopt -s no_empty_cmd_completion
   # Necessary for programmable completion.
   shopt -s extglob
+  # Case-insensitive wildcards
+  shopt -s nocaseglob
 }
 
 bashrc_color_variables() {
