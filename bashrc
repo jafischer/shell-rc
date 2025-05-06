@@ -266,10 +266,12 @@ bashrc_finish_up() {
   # shellcheck disable=SC1090
   source ~/.gimme-aws-creds-xaws
 
-  eval "$(/opt/homebrew/bin/brew shellenv)"
-  export NVM_DIR="$HOME/.nvm"
-  [ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh"  # This loads nvm
-  [ -s "$NVM_DIR/bash_completion" ] && . "$NVM_DIR/bash_completion"  # This loads nvm bash_completion
+  [ -e /opt/homebrew/bin/brew ] && eval "$(/opt/homebrew/bin/brew shellenv)"
+  [ -e "$HOME/.nvm" ] && {
+    export NVM_DIR="$HOME/.nvm"
+    . "$NVM_DIR/nvm.sh"  # This loads nvm
+    . "$NVM_DIR/bash_completion"  # This loads nvm bash_completion
+  }
 
   # Convert ~ to $HOME in PATH. Do this at the end to account for paths added by any sourced scripts above.
   export PATH="${PATH//\~/$HOME}"
