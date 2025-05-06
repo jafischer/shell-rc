@@ -130,8 +130,6 @@ alias gchmod='git update-index --chmod=+x'
 # See https://github.sie.sony.com/SIE/safety-scripts/blob/main/git-url.sh
 is_installed git-url.sh && alias gurl='git-url.sh'
 
-alias cdicloud='pushd "${ICLOUD_DIR}"'
-
 ###
 ### sk8s aliases (see https://github.sie.sony.com/jafischer/sk8s)
 ###
@@ -177,3 +175,6 @@ if is_wsl; then
 fi
 
 alias cfmt='cargo +nightly fmt'
+alias cdicloud='pushd "${ICLOUD_DIR}"'
+alias ct='carg\o tauri'
+alias ctd='cargo tauri dev'

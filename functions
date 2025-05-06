@@ -158,6 +158,16 @@ py() { launch_ide pycharm "$1"; }
 # "gl" is already an alias, so gogo for GoLand
 gogo() { launch_ide goland "$1"; }
 
+# st: open the specified directory in SourceTree
+st() {
+  local dir="$(choosedir "$1")"
+  if ! [[ -d "$dir" ]]; then
+    echo "$dir not found"
+    return 1
+  fi
+  open -a SourceTree "$dir"
+}
+
 myvi() {
   # If running on a Mac, just run mvim (MacVim) with the supplied arguments.
   is_mac && {
@@ -229,6 +239,9 @@ log_debug() {
 # Since 'in' is a keyword, using 'inn'.
 # This function performs a command in the specified directory(ies).
 #
+# Usage: inn DIRECTORIES COMMAND
+# Note: any wildcards in the DIRECTORIES must be escaped.
+#
 # Examples:
 # inn ./abc touch somefile
 # inn ./\* doSomething \> something.out
@@ -238,6 +251,7 @@ inn() {
   shift
 
   for dir in $dirs; do
+    [[ ! -d $dir ]] && continue
     local result=0
     pushd $dir >/dev/null || { echo -e $RED$dir is not a directory$NC; continue; }
 
@@ -252,7 +266,7 @@ inn() {
     # shellcheck disable=SC2164
     popd >/dev/null
 
-    if [[ $result != 0 ]]; then
+    if [[ -z $IGNORE_FAILURE ]] && [[ $result != 0 ]]; then
       return $result
     fi
   done
@@ -432,7 +446,7 @@ xa() {
   fi
 }
 
-# Creates a new script in ~/bin and chmod's it
+# Creates a new script in ~/bin and makes it executable.
 newscript() {
   local name="$HOME/bin/$1"
   echo -e "#!/bin/bash\n" > "$name"
@@ -440,3 +454,13 @@ newscript() {
   # + option means go to last line
   vi + "$name"
 }
+
+if is_installed yq; then
+  # Combined two yaml files, e.g.
+  # merge_yaml clients.yaml clients-e1-np.yaml
+  merge_yaml() {
+    local default="$1" override="$2"
+
+    yq ". *= load(\"$override\")" "$default"
+  }
+fi

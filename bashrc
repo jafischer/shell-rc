@@ -77,7 +77,6 @@ bashrc_set_path() {
     my_path="$HOME/bin/binaries"
     my_path="$my_path:$HOME/bin"
     my_path="$my_path:/usr/local/mysql/bin"
-    my_path="$my_path:/opt/homebrew/bin"
     my_path="$my_path:/Library/Java/JavaVirtualMachines/current/Contents/Home/bin"
     my_path="$my_path:/usr/local/MacGPG2/bin"
     my_path="$my_path:/Library/Apple/usr/bin"
@@ -177,10 +176,11 @@ bashrc_setup_history(){
   HISTTIMEFORMAT="%F %T "
   # ignorespace: preceding a command with a space will omit it from the history.
   # ignoredups: causes lines which match the previous history entry to not be saved
-  # erasedups: causes all previous lines matching the current line to be removed from the history list before that line is saved
-  HISTCONTROL=ignorespace:ignoredups:erasedups
+  HISTCONTROL=ignorespace:ignoredups
   # Patterns of commands to omit from history:
-  HISTIGNORE="?:??:hgrep*:h50:lrt:gst"
+  # Single character and two-character commands; don't need to ignore anything else, because
+  # now my history-shrinker (https://github.com/jafischer/history-shrinker) takes care of the rest.
+  HISTIGNORE="?:??"
   HISTSIZE=50000
   HISTFILESIZE=50000
   # "history -a" causes all commands to be immediately appended to .bash_history, instead of only when the shell exits.
@@ -265,6 +265,11 @@ bashrc_finish_up() {
   # Gimme-aws-creds: credentials for AWS (https://github.sie.sony.com/SIE/gimme-aws-creds)
   # shellcheck disable=SC1090
   source ~/.gimme-aws-creds-xaws
+
+  eval "$(/opt/homebrew/bin/brew shellenv)"
+  export NVM_DIR="$HOME/.nvm"
+  [ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh"  # This loads nvm
+  [ -s "$NVM_DIR/bash_completion" ] && . "$NVM_DIR/bash_completion"  # This loads nvm bash_completion
 
   # Convert ~ to $HOME in PATH. Do this at the end to account for paths added by any sourced scripts above.
   export PATH="${PATH//\~/$HOME}"
