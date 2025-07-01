@@ -1,24 +1,27 @@
 #!/bin/bash
-# Note: the hash-bang above was only added so that my IDE knows this is a bash script. But this script must be
+# Note: the hash-bang above was only added so that my IDE treats this as a shell script. But this script must be
 # sourced, not executed from the command line.
 
-# Define a bunch of functions for organization & readability, then call "bashrc_main" at the end to kick it all off.
-bashrc_main() {
-  # Must call `functions` first is_mac/is_wsl are used all over the place.
-  source "$(dirname ${BASH_SOURCE[0]})/osfuncs"
+[[ $SHELL == /bin/bash ]] && STARTUP_DIR="$(dirname ${BASH_SOURCE[0]})"
+[[ $SHELL == /bin/zsh ]] && STARTUP_DIR="${0:a:h}"
 
-  bashrc_set_variables
-  bashrc_set_path
-  bashrc_aliases_and_functions
-  bashrc_shell_settings
-  bashrc_color_variables
-  bashrc_setup_history
-  bashrc_setup_prompt
-  bashrc_finish_up
+# Define a bunch of functions for organization & readability, then call "rc_main" at the end to kick it all off.
+rc_main() {
+  # Must call `osfuncs` first is_mac/is_wsl are used all over the place.
+  source "$STARTUP_DIR/osfuncs"
+
+  rc_set_variables
+  rc_set_path
+  rc_aliases_and_functions
+  rc_shell_settings
+  rc_color_variables
+  rc_setup_history
+  rc_setup_prompt
+  rc_finish_up
 }
 
 ### PERSONALIZE THIS
-bashrc_set_variables() {
+rc_set_variables() {
   #-------------------------------------------------------------
   # Set some environment variables (the ones with "export") and
   # some variables used in my aliases and functions.
@@ -51,11 +54,11 @@ bashrc_set_variables() {
   export EDITOR=vim
   export EXINIT="source $HOME/.vimrc"
 
-  export GOROOT=~/go/go1.21.5
+  [[ -d ~/go/go1.21.5 ]] && export GOROOT=~/go/go1.21.5
 }
 
 ### PERSONALIZE THIS
-bashrc_set_path() {
+rc_set_path() {
   local my_path
 
   # Because this file might get sourced repeatedly (when I'm tweaking it and re-sourcing it),
@@ -105,16 +108,16 @@ bashrc_set_path() {
   export CDPATH="$SRC_DIR:$MYSRC_DIR:$_3RDPARTY_DIR:$HOME/OneDrive/Documents:$ICLOUD_DIR/Documents:$HOME"
 }
 
-bashrc_aliases_and_functions() {
+rc_aliases_and_functions() {
   #-------------------------------------------------------------
   # Aliases and functions
   #-------------------------------------------------------------
-  source "$(dirname ${BASH_SOURCE[0]})/aliases"
-  source "$(dirname ${BASH_SOURCE[0]})/functions"
-  source "$(dirname ${BASH_SOURCE[0]})/completion"
+  source "$STARTUP_DIR/aliases"
+  source "$STARTUP_DIR/functions"
+  is_bash && source "$STARTUP_DIR/completion"
 }
 
-bashrc_shell_settings() {
+rc_shell_settings() {
   #-------------------------------------------------------------
   # Some settings
   #-------------------------------------------------------------
@@ -123,30 +126,48 @@ bashrc_shell_settings() {
 
   # Report the status of terminated background jobs immediately, rather than before the next primary prompt
   set -o notify
-  # "noclobber" off means you can overwrite files when redirecting to them. I find the risk acceptable.
-  # set -o noclobber
-  # "nounset" would cause errors if attempting to use variables that aren't set. E.g. "echo $asdf"
-  # set -o nounset
-  # set -o xtrace          # Useful for debugging.
 
-  # Case-insensitive tab completion for the win:
-  bind "set completion-ignore-case on"
-  # This is so useful to me. Just hit tab once and it'll show you all the choices. Don't have to hit double-tab.
-  bind "set show-all-if-ambiguous on"
+  if is_zsh; then
+    # Unlike bash, zsh's for command will treat a variable containing multiple words as one word...
+    # This changes that behavior:
+    setopt SH_WORD_SPLIT
 
-  # Minor errors in directory names will be corrected.
-  shopt -s cdspell
-  # Update the values of LINES and COLUMNS if window size is changed.
-  shopt -s checkwinsize
-  # If you accidentally hit tab on an empty command line, it won't show you all available commands.
-  shopt -s no_empty_cmd_completion
-  # Necessary for programmable completion.
-  shopt -s extglob
-  # Case-insensitive wildcards
-  shopt -s nocaseglob
+    # I hate the default zsh behavior of printing an error if a wildcard has no match. But maybe that's just because
+    # I'm used to decades of sh/bash behavior.
+    unsetopt nomatch
+
+    # Case-insensitive tab completion for the win:
+    zstyle ':completion:*' matcher-list '' 'm:{a-zA-Z}={A-Za-z}' 'r:|=*' 'l:|=* r:|=*'
+    autoload -Uz compinit && compinit
+    # When I hit tab and there are multiple matches, just show me the matches
+    # TODO: this doesn't work
+    #setopt no_auto_menu
+    #setopt bash_auto_list
+    # If I accidentally hit tab on an empty command line, don't show me all available commands.
+    # TODO: shopt -s no_empty_cmd_completion
+    # Case-insensitive wildcards
+    unsetopt CASE_GLOB
+
+  else
+    # Case-insensitive tab completion for the win:
+    bind "set completion-ignore-case on"
+    # This is so useful to me. Just hit tab once and it'll show you all the choices. Don't have to hit double-tab.
+    bind "set show-all-if-ambiguous on"
+
+    # Minor errors in directory names will be corrected.
+    shopt -s cdspell
+    # Update the values of LINES and COLUMNS if window size is changed.
+    shopt -s checkwinsize
+    # If you accidentally hit tab on an empty command line, it won't show you all available commands.
+    shopt -s no_empty_cmd_completion
+    # Necessary for programmable completion.
+    shopt -s extglob
+    # Case-insensitive wildcards
+    shopt -s nocaseglob
+  fi
 }
 
-bashrc_color_variables() {
+rc_color_variables() {
   #-------------------------------------------------------------
   # Define some variables containing ANSI escape sequences
   # that we can use with "echo -e" to get colorful output.
@@ -157,46 +178,69 @@ bashrc_color_variables() {
   NC='\x1b[0m' # No Color
 }
 
-bashrc_setup_history(){
+rc_setup_history(){
   #-------------------------------------------------------------
   # History config
   #-------------------------------------------------------------
 
-  # cmdhist: Save all lines of a multiple-line command in the same history entry.  This allows easy re-editing of multi-line commands.
-  # histappend: History is appended to history file, not overwritten.
-  # histreedit: user is given the opportunity to re-edit a failed history substitution
-  # histverify: the results of history substitution are not immediately executed; user must press enter.
-  shopt -s cmdhist histappend histreedit histverify
+  if is_bash; then
+    # cmdhist: Save all lines of a multiple-line command in the same history entry.  This allows easy re-editing of multi-line commands.
+    # histappend: History is appended to history file, not overwritten.
+    # histreedit: user is given the opportunity to re-edit a failed history substitution
+    # histverify: the results of history substitution are not immediately executed; user must press enter.
+    shopt -s cmdhist histappend histreedit histverify
 
-  ### PERSONALIZE THIS
-  # I keep my history in a (private) git repository because I've had too many instances where somehow my
-  # entire bash history file gets cleared.
-  HISTFILE="$HOME/mysrc/bash-history/history-$(my_os)"
+    ### PERSONALIZE THIS
+    # I keep my history in a (private) git repository because I've had too many instances where somehow my
+    # entire bash history file gets cleared.
+    HISTFILE="$HOME/mysrc/shell-history/history-$(my_os)"
 
-  HISTTIMEFORMAT="%F %T "
-  # ignorespace: preceding a command with a space will omit it from the history.
-  # ignoredups: causes lines which match the previous history entry to not be saved
-  HISTCONTROL=ignorespace:ignoredups
-  # Patterns of commands to omit from history:
-  # Single character and two-character commands; don't need to ignore anything else, because
-  # now my history-shrinker (https://github.com/jafischer/history-shrinker) takes care of the rest.
-  HISTIGNORE="?:??"
-  HISTSIZE=50000
-  HISTFILESIZE=50000
-  # "history -a" causes all commands to be immediately appended to .bash_history, instead of only when the shell exits.
-  # (useful for when using multiple terminal windows).
-  if [[ -z "$PROMPT_COMMAND" ]] ; then
-    PROMPT_COMMAND="history -a"
-  elif [[ "$PROMPT_COMMAND" != *"history -a"* ]]; then
-    PROMPT_COMMAND="${PROMPT_COMMAND}; history -a"
+    HISTTIMEFORMAT="%F %T "
+    # ignorespace: preceding a command with a space will omit it from the history.
+    # ignoredups: causes lines which match the previous history entry to not be saved
+    HISTCONTROL=ignorespace:ignoredups
+    # Patterns of commands to omit from history:
+    # Single character and two-character commands; don't need to ignore anything else, because
+    # now my history-shrinker (https://github.com/jafischer/history-shrinker) takes care of the rest.
+  #  HISTIGNORE="?:??"
+    HISTSIZE=50000
+    HISTFILESIZE=50000
+    # "history -a" causes all commands to be immediately appended to .bash_history, instead of only when the shell exits.
+    # (useful for when using multiple terminal windows).
+    if [[ -z "$PROMPT_COMMAND" ]] ; then
+      PROMPT_COMMAND="history -a"
+    elif [[ "$PROMPT_COMMAND" != *"history -a"* ]]; then
+      PROMPT_COMMAND="${PROMPT_COMMAND}; history -a"
+    fi
+
+  else
+    setopt HIST_APPEND HIST_VERIFY
+
+    ### PERSONALIZE THIS
+    # I keep my history in a (private) git repository because I've had too many instances where somehow my
+    # entire history file gets cleared.
+    # NOTE: On macOS, this gets overwritten by /etc/zshrc_Apple_Terminal... so I've added a hacky fix in
+    # the
+    export HISTFILE="$HOME/mysrc/shell-history/history-$(my_os)"
+
+    HISTTIMEFORMAT="%F %T "
+    setopt HIST_IGNORE_DUPS
+    setopt HIST_IGNORE_SPACE
+    HISTSIZE=50000
+    SAVEHIST=50000
   fi
 }
 
-bashrc_setup_prompt() {
+rc_setup_prompt() {
   #-------------------------------------------------------------
   # Set up a fancy prompt to impress the ladies
   #-------------------------------------------------------------
 
+  is_bash && rc_setup_bash_prompt
+  is_zsh && rc_setup_zsh_prompt
+}
+
+rc_setup_bash_prompt() {
   # The bash shell lets you customize your command prompt via the PS1 variable. You can just set it to a string,
   # like "Hello!" but the real power comes with various special escape sequences.
   # Note: by convention, PS1 tends to end with \$, which will be "$" if you're running normally,
@@ -246,8 +290,48 @@ bashrc_setup_prompt() {
   fi
 }
 
+rc_setup_zsh_prompt() {
+  # See https://zsh.sourceforge.io/Doc/Release/Prompt-Expansion.html#Prompt-Expansion
+
+  # Enable the running of commands in PS1
+  setopt PROMPT_SUBST
+
+  # #~ : current directory, with ~ prefix if under $HOME.
+  # Note: %F{11} is bright yellow; I couldn't find a mnemonic that worked (e.g. %F{yellow,bold})
+  # See https://robotmoon.com/zsh-prompt-generator/
+  PS1_dir='%F{11}dir: %F{cyan}%~%f '
+
+  # shellcheck disable=SC2078
+  if [[ "$TERM_PROGRAM" == "Apple_Terminal" || is_wsl ]]; then
+    ps1_branch() {
+      echo_no_newline "$(git status 2>&1 | sed -e "s|fatal:.*|On branch: N/A|" | grep "On branch" | cut -f 3 -d' ')"
+    }
+    ps1_ns() {
+      echo_no_newline "$(kubectl config view --minify -o jsonpath="{..namespace}")"
+    }
+    # shellcheck disable=SC2016
+    PS1_branch='%F{11}branch: %F{cyan}$(git status 2>&1 | sed -e "s|fatal:.*|On branch: N/A|" | grep "On branch" | cut -f 3 -d" ")%f '
+    # shellcheck disable=SC2016
+    PS1_ns='%F{11}ns: %F{cyan}$(kubectl config view --minify -o jsonpath="{..namespace}")%f'
+    # On the mac, `brew install coreutils` to get gdate
+    if is_installed gdate; then
+      # shellcheck disable=SC2016
+      PS1_timestamp='$(gdate +%H:%M:%S.%3N)'
+    else
+      # shellcheck disable=SC2016
+      PS1_timestamp='$(date +%H:%M:%S)'
+    fi
+  fi
+  # For now, omit branch and namespace on WSL because they're just too slow.
+  if is_wsl; then
+    export PS1=$PS1_dir$'\n'$PS1_timestamp' \$ '
+  else
+    export PS1=$PS1_dir$PS1_branch$PS1_ns$'\n'$PS1_timestamp' \$ '
+  fi
+}
+
 ### PERSONALIZE THIS
-bashrc_finish_up() {
+rc_finish_up() {
   #-------------------------------------------------------------
   # Miscellaneous
   #-------------------------------------------------------------
@@ -279,15 +363,4 @@ bashrc_finish_up() {
 
 ##########################
 
-bashrc_main
-
-# shellcheck disable=SC2046
-# Now that we've run bashrc_main, clear it and all the other temporary
-# functions that were defined in this file:
-unset -f $(
-  # List all functions
-  declare -F |
-  # Choose only the last word of each line, which is the function name.
-  awklast |
-  # Choose the functions starting with "bashrc_"
-  grep '^bashrc_')
+rc_main
