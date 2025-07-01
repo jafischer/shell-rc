@@ -1,21 +1,21 @@
-# My bash startup files
+# My bash/zsh startup files
 
 I got tired of copying these files around to every new machine, so I finally put
 them all in git. Can't believe it took me so long... all I had to do was move
 them out of $HOME.
 
-My `.bash_profile` is now just a single line:
+My `.bashrc` and `.zshrc` now contain just a single line:
 
 ```
-source ~/src/bashrc/bashrc
+source ~/mysrc/rc/main
 ```
 
 ## Feel Free to Use This!
 
 You can git clone this somewhere, and add a similar `source` statement from
-above to your own `.bash_profile`.
+above to your own shell startup file.
 
-I've taken great pains to make this as general-purpose as possible. But there
+I've taken great pains to make this as general-purpose as possible, but there
 are going to be a couple of things that need to be changed for each user (such
 as the directories you add to PATH), and I've gone
 through and marked such areas with the following comment:
@@ -24,7 +24,7 @@ through and marked such areas with the following comment:
 ### PERSONALIZE THIS
 ```
 
-## The Most Important Bash Customization
+## The Most Important Shell Customization
 
 What's the first thing you do every time you launch the Terminal app?
 

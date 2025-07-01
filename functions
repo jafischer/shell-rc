@@ -4,8 +4,8 @@
 
 # Determine if a path is absolute or relative
 is_absolute_path() {
-  local path="$1"
-  [[ "${path:0:1}" == "/" ]] || [[ "${path:0:1}" == "~" ]]
+  local p="$1"
+  [[ "${p:0:1}" == "/" ]] || [[ "${p:0:1}" == "~" ]]
 }
 
 # Determine if a command is installed
@@ -66,8 +66,10 @@ choosedir() {
     v)    echo "$ICLOUD_DIR/voroncfg"; return 0 ;;
     m)    echo "$SRC_DIR/meccano"; return 0 ;;
     gb)   echo "$SRC_DIR/gatsby"; return 0 ;;
+    sk)   echo "$SRC_DIR/../mysrc/sk8s"; return 0 ;;
     pa)   echo "$SRC_DIR/presidio-analyzer"; return 0 ;;
     pa2)  echo "$SRC_DIR/presidio-anonymizer"; return 0 ;;
+    cap)  echo "$SRC_DIR/capone"; return 0 ;;
   esac
 
   # Search for the directory in $CDPATH. (Note: we don't actually have to do this, since the cd
@@ -123,8 +125,11 @@ choosedir() {
 }
 
 mycd() {
+  local target
+  target="$(choosedir "$1")" || return 1
+
   # shellcheck disable=SC2164
-  if \cd "$(choosedir "$1")"; then
+  if \cd "$target"; then
     if [[ -d ./.git ]] && ! [[ -e ./.git/hooks/pre-commit ]] && [[ -d "$SRC_DIR/safety-scripts" ]]; then
       log "Copying git hooks from $SRC_DIR/safety-scripts/git-hooks"
       cp "$SRC_DIR/safety-scripts"/git-hooks/* .git/hooks
@@ -205,7 +210,7 @@ myvi() {
 
 # Yes/no prompt
 ask() {
-  echo -n "$@" '[y/n] ' ; read ans
+  echo_no_newline "$@" '[y/n] ' ; read ans
   case "$ans" in
     y*|Y*) return 0 ;;
     *) return 1 ;;
@@ -227,13 +232,13 @@ ip6() {
 }
 
 log() {
-  echo -e "$(date +%T)" "$CYAN$*$NC" 2>&1
+  echo -e "$(date +%T)" "$CYAN$*$NC" 1>&2
 }
 
 log_debug() {
   # shellcheck disable=SC2154
   [[ -n "$DEBUG" ]] &&
-    echo -e "$(date +%T)" "$cyan$*$NC" 2>&1
+    echo -e "$(date +%T)" "$cyan$*$NC" 1>&2
 }
 
 # Since 'in' is a keyword, using 'inn'.
@@ -294,7 +299,11 @@ h() {
     shift
   fi
 
-  history $count "$@"
+  if is_bash; then
+    history $count "$@"
+  else
+    fc -l -$count "$@"
+  fi
 }
 
 # Search your history
@@ -406,7 +415,7 @@ fi
 
 # URL-encode the arguments
 urlencode() {
-  echo -n "$@"| jq -sRr '@uri'
+  echo_no_newline "$@"| jq -sRr '@uri'
 }
 
 # Sound a bell (useful when running a long command and you want to know when it's finished).

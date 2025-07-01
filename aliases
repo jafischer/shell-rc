@@ -4,12 +4,14 @@
 
 # Command to reload everything here file after I make changes.
 # shellcheck disable=SC2139
-alias reload="source $(dirname ${BASH_SOURCE[0]})/bashrc"
+alias reload="source $STARTUP_DIR/main"
 
 # Use my "mycd" function instead of the cd command:
 alias cd='mycd'
 # Ditto for vi
 alias vi='myvi'
+
+alias cdicloud='pushd "${ICLOUD_DIR}"'
 
 # Dang circular dependencies... I'll just define is_installed here as well, since
 # we need to source "aliases" before "functions".
@@ -68,7 +70,9 @@ alias path='echo -e ${PATH//:/\\n}'
 alias pd=pushd
 alias pp=popd
 # Echo without a newline
-alias en='echo -n'
+alias echo_no_newline='printf'
+# For short:
+alias en=echo_no_newline
 # Convenient short form of the find command. Just "fnd SomeFilePattern".
 alias fnd='find . -name '
 # Show all processes owned by me
@@ -95,7 +99,7 @@ alias dec='printf "%d\n"'
 # Stop shouting at me, uuidgen!
 # Convert uppercase uuid to lowercase. Also, strip the trailing newline so I can more
 # easily paste into code. (e.g. "uuidgen | pbcopy")
-alias uuidgen='echo -n $(\uuidgen | tr "[:upper:]" "[:lower:]")'
+alias uuidgen='echo_no_newline $(\uuidgen | tr "[:upper:]" "[:lower:]")'
 # Reverse the lines of a file.
 alias reverse='tail -r'
 # Curl with newline added to the end of the output
@@ -174,7 +178,7 @@ if is_wsl; then
   alias git=git.exe
 fi
 
-alias cfmt='cargo +nightly fmt'
-alias cdicloud='pushd "${ICLOUD_DIR}"'
-alias ct='carg\o tauri'
+# Rust-specific aliases
+alias cfmt='cargo +nightly fmt --all'
+alias ct='cargo tauri'
 alias ctd='cargo tauri dev'

@@ -30,3 +30,11 @@ my_os() {
     echo unknown-os
   fi
 }
+
+is_bash() {
+  [[ $SHELL == /bin/bash ]]
+}
+
+is_zsh() {
+  [[ $SHELL == /bin/zsh ]]
+}
