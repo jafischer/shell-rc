@@ -131,6 +131,9 @@ rc_shell_settings() {
     # Unlike bash, zsh's for command will treat a variable containing multiple words as one word...
     # This changes that behavior:
     setopt SH_WORD_SPLIT
+    # By default, zsh doesn't treat # as a comment in interactive mode; but that's a pain if you're pasting
+    # a multi-line command that happens to contain comments.
+    setopt INTERACTIVE_COMMENTS
 
     # I hate the default zsh behavior of printing an error if a wildcard has no match. But maybe that's just because
     # I'm used to decades of sh/bash behavior.
@@ -148,7 +151,7 @@ rc_shell_settings() {
     # Case-insensitive wildcards
     unsetopt CASE_GLOB
 
-  else
+  elif is_bash; then
     # Case-insensitive tab completion for the win:
     bind "set completion-ignore-case on"
     # This is so useful to me. Just hit tab once and it'll show you all the choices. Don't have to hit double-tab.
@@ -164,6 +167,8 @@ rc_shell_settings() {
     shopt -s extglob
     # Case-insensitive wildcards
     shopt -s nocaseglob
+  else
+    log_error "Unsupported shell: $SHELL"
   fi
 }
 
