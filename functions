@@ -128,7 +128,15 @@ mycd() {
   local target
   target="$(choosedir "$1")" || return 1
 
-  # shellcheck disable=SC2164
+  ### PERSONALIZE THIS
+  # (Actually there's nothing to personalize here, per se. Just a suggestion to clone the safety-scripts
+  # repo).
+  # I have some useful git hooks in https://github.sie.sony.com/SIE/safety-scripts.git. They prevent me
+  # from doing things like committing into the main branch by mistake, or committing code that I hadn't
+  # intended to commit (I use a "nocommit" comment to mark such code). They've save my butt
+  # countless times.
+  # But whenever I clone a new repo, I often forget to manually copy the hooks; so here, whenever I cd into
+  # a git repo, I check to see if the hooks are present, and if not, I install them.
   if \cd "$target"; then
     if [[ -d ./.git ]] && ! [[ -e ./.git/hooks/pre-commit ]] && [[ -d "$SRC_DIR/safety-scripts" ]]; then
       log "Copying git hooks from $SRC_DIR/safety-scripts/git-hooks"
@@ -312,21 +320,32 @@ findlib() {
 }
 
 # Because I save a huge history, I don't want to show it all by default (otherwise it fills my terminal screen buffer).
-# So this shows 50 lines by default, or the number specified as an argument.
+# So this shows 99 lines by default, or the number specified as an argument.
 h() {
   count=$1
   if [[ -z "$1" ]]; then
-    count=50
+    count=99
   else
     shift
   fi
 
-  if is_bash; then
-    history $count "$@"
-  else
-    fc -l -$count "$@"
-  fi
+  history $count "$@"
 }
+
+# In zsh, the `history` command is aliased to `fc -l` and only shows the history since the shell was started, but
+# I want history from $HISTFILE as well:
+if is_zsh; then
+  history() {
+    count=$1
+    if [[ -z "$1" ]]; then
+      count=$HISTSIZE
+    else
+      shift
+    fi
+
+    fc -i -l -$HISTSIZE "$@"
+  }
+fi
 
 # Search your history
 hgrep() {
