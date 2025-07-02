@@ -24,46 +24,8 @@ through and marked such areas with the following comment:
 ### PERSONALIZE THIS
 ```
 
-## The Most Important Shell Customization
-
-What's the first thing you do every time you launch the Terminal app?
-
-Usually you have to type in a long `cd` command to get to where you want to go:
-
-```bash
-cd Documents/work/github/some-long-repo-name/helm-unified/same-dang-repo-name/omg-are-we-done-yet
-```
-So much typing!
-
-In Finder you can mark directories as Favorite, and then they're always there,
-just one click away. Well the good news is that you can do something similar
-in the shell.
-
-### CDPATH
-
-The first thing that will help with this: set up a `CDPATH` environment
-variable. It's just like `PATH`, but for directories. 
-
-Imagine if I had to type `/Library/Java/JavaVirtualMachines/current/Contents/Home/bin/java`
-every time I need to run the `java` command. Well of course I don't, because
-`/Library/Java/JavaVirtualMachines/current/Contents/Home/bin` is one of the
-directories in my `PATH` environment variable.
-
-So in the same way, if my CDPATH is `"$HOME/src:$HOME/mysrc:$HOME/3rdparty"`,
-then when I type 
-```bash
-cd kamaji-eliot-ness
-```
-I will end up in `$HOME/src/kamaji-eliot-ness`.
-
-This saves me a bit of typing, but I'd like to do better.
-
-### Use Heuristics!
-
-Long story short: in the [functions](functions) script lies a function called
-`mycd`, which I alias `cd` to. Have a look at it (the main guts are in
-`choosedir`). It allows me to jump quickly back and forth between my many git
-repos, with usually a 2 or 3 letter shortcut.
+So, load the directory into IntelliJ (or PyCharm or any IDE) and use
+Find-in-Files to go through all occurrences of `### PERSONALIZE THIS`.
 
 ## 3rd-Party Tools
 
@@ -79,7 +41,8 @@ Here is a list of such utilities:
 
 ## "RC"?
 
-Why the "bashrc" name? It's just an ancient Unix convention (pre-dating Unix even):
+Ever wondered, what's with all the files ending in "rc"? It's just an ancient
+Unix convention (pre-dating Unix even):
 
 > The ‘rc’ suffix goes back to Unix's grandparent, CTSS. 
 > It had a command-script feature called "runcom". 

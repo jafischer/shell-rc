@@ -183,6 +183,15 @@ rc_setup_history(){
   # History config
   #-------------------------------------------------------------
 
+
+  ### PERSONALIZE THIS
+  # I like to keep my history in a git repository because I've had too many instances where somehow my
+  # entire bash history file gets cleared, and I search my history a lot.
+  # Note: if you do so, make sure you set the repo to private, because your history may contain passwords or other
+  # secrets.
+  # In fact I wrote a tool to scrub my history before committing it: https://github.sie.sony.com/jafischer/shell-rc
+  export HISTFILE="$HOME/mysrc/shell-history/history-$(my_os)"
+
   if is_bash; then
     # cmdhist: Save all lines of a multiple-line command in the same history entry.  This allows easy re-editing of multi-line commands.
     # histappend: History is appended to history file, not overwritten.
@@ -190,19 +199,10 @@ rc_setup_history(){
     # histverify: the results of history substitution are not immediately executed; user must press enter.
     shopt -s cmdhist histappend histreedit histverify
 
-    ### PERSONALIZE THIS
-    # I keep my history in a (private) git repository because I've had too many instances where somehow my
-    # entire bash history file gets cleared.
-    HISTFILE="$HOME/mysrc/shell-history/history-$(my_os)"
-
     HISTTIMEFORMAT="%F %T "
     # ignorespace: preceding a command with a space will omit it from the history.
     # ignoredups: causes lines which match the previous history entry to not be saved
     HISTCONTROL=ignorespace:ignoredups
-    # Patterns of commands to omit from history:
-    # Single character and two-character commands; don't need to ignore anything else, because
-    # now my history-shrinker (https://github.com/jafischer/history-shrinker) takes care of the rest.
-  #  HISTIGNORE="?:??"
     HISTSIZE=50000
     HISTFILESIZE=50000
     # "history -a" causes all commands to be immediately appended to .bash_history, instead of only when the shell exits.
@@ -213,21 +213,12 @@ rc_setup_history(){
       PROMPT_COMMAND="${PROMPT_COMMAND}; history -a"
     fi
 
-  else
-    setopt HIST_APPEND HIST_VERIFY
-
-    ### PERSONALIZE THIS
-    # I keep my history in a (private) git repository because I've had too many instances where somehow my
-    # entire history file gets cleared.
-    # NOTE: On macOS, this gets overwritten by /etc/zshrc_Apple_Terminal... so I've added a hacky fix in
-    # the
-    export HISTFILE="$HOME/mysrc/shell-history/history-$(my_os)"
-
-    HISTTIMEFORMAT="%F %T "
-    setopt HIST_IGNORE_DUPS
-    setopt HIST_IGNORE_SPACE
+  elif is_zsh; then
+    setopt HIST_APPEND HIST_VERIFY HIST_IGNORE_DUPS HIST_IGNORE_SPACE
     HISTSIZE=50000
     SAVEHIST=50000
+  else
+    log_error "Unsupported shell: $SHELL"
   fi
 }
 
