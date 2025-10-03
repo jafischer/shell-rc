@@ -194,7 +194,7 @@ rc_setup_history(){
   # entire bash history file gets cleared, and I search my history a lot.
   # Note: if you do so, make sure you set the repo to private, because your history may contain passwords or other
   # secrets.
-  # In fact I wrote a tool to scrub my history before committing it: https://github.sie.sony.com/jafischer/shell-rc
+  # In fact I wrote a tool to scrub my history before committing it: https://github.com/jafischer/history-shrinker
   export HISTFILE="$HOME/mysrc/shell-history/history-$(my_os)"
 
   if is_bash; then
@@ -219,7 +219,8 @@ rc_setup_history(){
     fi
 
   elif is_zsh; then
-    setopt HIST_APPEND HIST_VERIFY HIST_IGNORE_DUPS HIST_IGNORE_SPACE
+    export HISTFILE="$HOME/mysrc/shell-history/history-zsh-$(my_os)"
+    setopt HIST_APPEND HIST_VERIFY HIST_IGNORE_DUPS HIST_IGNORE_SPACE EXTENDED_HISTORY HIST_REDUCE_BLANKS
     HISTSIZE=50000
     SAVEHIST=50000
   else
@@ -265,9 +266,9 @@ rc_setup_bash_prompt() {
       [[ -n $DEBUG ]] && echo " ($(((t2 - t1) / 1000000))ms)"
     }
     # shellcheck disable=SC2016
-    PS1_branch='[\e[1;33mbranch: \e[1;36m$(git status 2>&1 | sed -e "s|fatal:.*|On branch: N/A|" | grep "On branch" | cut -f 3 -d" ")\e[0m] '
+    PS1_branch='[\e[1;33mgit branch: \e[1;36m$(git status 2>&1 | sed -e "s|fatal:.*|On branch: N/A|" | grep "On branch" | cut -f 3 -d" ")\e[0m] '
     # shellcheck disable=SC2016
-    PS1_ns='[\e[1;33mns: \e[1;36m$(kubectl config view --minify -o jsonpath="{..namespace}")\e[0m]'
+    PS1_ns='[\e[1;33mk8s ns: \e[1;36m$(kubectl config view --minify -o jsonpath="{..namespace}")\e[0m]'
     # On the mac, `brew install coreutils` to get gdate
     if is_installed gdate; then
       # shellcheck disable=SC2016
@@ -306,9 +307,9 @@ rc_setup_zsh_prompt() {
       echo_no_newline "$(kubectl config view --minify -o jsonpath="{..namespace}")"
     }
     # shellcheck disable=SC2016
-    PS1_branch='%F{11}branch: %F{cyan}$(git status 2>&1 | sed -e "s|fatal:.*|On branch: N/A|" | grep "On branch" | cut -f 3 -d" ")%f '
+    PS1_branch='%F{11}git branch: %F{cyan}$(git status 2>&1 | sed -e "s|fatal:.*|On branch: N/A|" | grep "On branch" | cut -f 3 -d" ")%f '
     # shellcheck disable=SC2016
-    PS1_ns='%F{11}ns: %F{cyan}$(kubectl config view --minify -o jsonpath="{..namespace}")%f'
+    PS1_ns='%F{11}k8s ns: %F{cyan}$(kubectl config view --minify -o jsonpath="{..namespace}")%f'
     # On the mac, `brew install coreutils` to get gdate
     if is_installed gdate; then
       # shellcheck disable=SC2016

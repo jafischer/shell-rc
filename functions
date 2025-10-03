@@ -41,7 +41,7 @@ choosedir() {
   [[ -z "$dir" ]] && { echo "$HOME"; return 0; }
 
   # Similarly, "cd -" means "cd to previous location".
-  [[ "$dir" == "-" ]] && { echo "-"; return 0; }
+  [[ "$dir" == "-" ]] && { printf "-"; return 0; }
 
   # If the specified directory exists, just echo it, and we're done.
   is_absolute_path "$1" && [[ -d "$dir" ]] && { echo "$dir"; return 0; }
@@ -128,6 +128,8 @@ mycd() {
   local target
   target="$(choosedir "$1")" || return 1
 
+  \cd "$target" || return 1
+
   ### PERSONALIZE THIS
   # (Actually there's nothing to personalize here, per se. Just a suggestion to clone the safety-scripts
   # repo).
@@ -137,12 +139,17 @@ mycd() {
   # countless times.
   # But whenever I clone a new repo, I often forget to manually copy the hooks; so here, whenever I cd into
   # a git repo, I check to see if the hooks are present, and if not, I install them.
-  if \cd "$target"; then
-    if [[ -d ./.git ]] && ! [[ -e ./.git/hooks/pre-commit ]] && [[ -d "$SRC_DIR/safety-scripts" ]]; then
-      log "Copying git hooks from $SRC_DIR/safety-scripts/git-hooks"
-      cp "$SRC_DIR/safety-scripts"/git-hooks/* .git/hooks
-    fi
+  if [[ -d ./.git ]] && ! [[ -e ./.git/hooks/pre-commit ]] && [[ -d "$SRC_DIR/safety-scripts" ]]; then
+    log "Copying git hooks from $SRC_DIR/safety-scripts/git-hooks"
+    cp "$SRC_DIR/safety-scripts"/git-hooks/* .git/hooks
   fi
+}
+
+mypd() {
+  local target
+  target="$(choosedir "$1")" || return 1
+
+  \pushd "$target" || return 1
 }
 
 # Functions for launching an IDE on a project directory, using the same logic as
@@ -322,7 +329,7 @@ findlib() {
 # Because I save a huge history, I don't want to show it all by default (otherwise it fills my terminal screen buffer).
 # So this shows 99 lines by default, or the number specified as an argument.
 h() {
-  count=$1
+  local count=$1
   if [[ -z "$1" ]]; then
     count=99
   else
@@ -336,14 +343,14 @@ h() {
 # I want history from $HISTFILE as well:
 if is_zsh; then
   history() {
-    count=$1
+    local count=$1
     if [[ -z "$1" ]]; then
       count=$HISTSIZE
     else
       shift
     fi
 
-    fc -i -l -$HISTSIZE "$@"
+    fc -i -l -$count "$@"
   }
 fi
 
@@ -388,12 +395,22 @@ if is_mac; then
   #
 
   meld() {
-    ( /Users/jafischer/Applications/Meld.app/Contents/MacOS/Meld "$@" >&/dev/null & )
+    local location
+
+    location=$(which meld) || { echo "meld not found in path"; return 1; }
+
+    # The UI app needs to be run in the background, otherwise command line can't
+    # be used again until app quits.
+    ( "$location" "$@" >&/dev/null & )
+    sleep 2
+    layout restore --app Meld
   }
 
-  # Launch DiffMerge
-  dm() {
-    ( /Applications/DiffMerge.app/Contents/MacOS/DiffMerge "$@" >&/dev/null & )
+  meldhead() {
+    local lines=$1 f1="$2" f2="$3"
+    head -n $lines "$f1" > /tmp/$(basename "$f1")-head
+    head -n $lines "$f2" > /tmp/$(basename "$f2")-head
+    meld /tmp/$(basename "$f1")-head /tmp/$(basename "$f2")-head
   }
 
 elif is_wsl; then
@@ -481,7 +498,7 @@ sort-by-line-length() {
 # Example:
 # xa dev16
 xa() {
-  local role=$1
+  local role=$1 save_ps1="$PS1"
 
   if [[ -z $role ]]; then
     xaws Aloy
@@ -494,11 +511,14 @@ xa() {
       perl -p -e "s/Account:/\x1b\[0mAccount:/; s/(Account: .*$role)/\x1b\[1;32m\$1/; s/Selections/\x1b\[0mSelections/"
     )
   fi
+
+  # I hate how xaws adds "(gimme-aws-creds)" to the start of the prompt.
+  PS1="$save_ps1"
 }
 
-# Creates a new script in ~/bin and makes it executable.
+# Creates a new script and makes it executable.
 newscript() {
-  local name="$HOME/bin/$1"
+  local name="$1"
   echo -e "#!/bin/bash\n" > "$name"
   chmod +x "$name"
   # + option means go to last line

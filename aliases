@@ -65,9 +65,11 @@ alias gv='grep -sv'
 # $ md three/levels/deep
 alias md='mkdir -p'
 alias rd='rmdir'
+# Make 'less' do case-insensitive searches
+alias less='\less --quit-if-one-screen --ignore-case'
 # Show my $PATH, but one directory per line
 alias path='echo -e ${PATH//:/\\n}'
-alias pd=pushd
+alias pd=mypd
 alias pp=popd
 # Echo without a newline
 alias echo_no_newline='printf'
@@ -180,5 +182,5 @@ fi
 
 # Rust-specific aliases
 alias cfmt='cargo +nightly fmt --all'
-alias ct='cargo tauri'
-alias ctd='cargo tauri dev'
+alias cversion="cargo metadata --format-version 1 --no-deps | jq .packages[0].version | sed -e 's/\"//g'"
+
