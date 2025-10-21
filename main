@@ -28,11 +28,11 @@ rc_set_variables() {
   #-------------------------------------------------------------
   # Set SRC_DIR to the location of your git repos.
   SRC_DIR=~/src
-  is_wsl && SRC_DIR=/mnt/c/Users/jafischer/src
+  is_wsl && SRC_DIR=/mnt/c/Users/jafischer.SIE/src
   MYSRC_DIR=~/mysrc
-  is_wsl && MYSRC_DIR=/mnt/c/Users/jafischer/mysrc
+  is_wsl && MYSRC_DIR=/mnt/c/Users/jafischer.SIE/mysrc
   _3RDPARTY_DIR=~/3rdparty
-  is_wsl && _3RDPARTY_DIR=/mnt/c/Users/jafischer/3rdparty
+  is_wsl && _3RDPARTY_DIR=/mnt/c/Users/jafischer.SIE/3rdparty
 
   # If you don't have iCloud storage, ignore this
   if [[ -d "$HOME/Library/Mobile Documents/com~apple~CloudDocs" ]]; then
@@ -41,7 +41,7 @@ rc_set_variables() {
     fi
   fi
   ICLOUD_DIR=$HOME/iCloudDrive
-  is_wsl && ICLOUD_DIR=/mnt/c/Users/jafischer/iCloudDrive
+  is_wsl && ICLOUD_DIR=/mnt/c/Users/jafischer.SIE/iCloudDrive
 
   # When you download and install the "Corretto" version of java, it installs into
   # /Library/Java/JavaVirtualMachines/amazon-corretto-NN.jdk, so I make a symlink
@@ -85,7 +85,7 @@ rc_set_path() {
     my_path="$my_path:/Library/Apple/usr/bin"
     my_path="$my_path:$HOME/go/go1.21.5/bin"
     my_path="$my_path:$HOME/go/bin"
-    my_path="$my_path::/Users/jafischer/Library/Application Support/JetBrains/Toolbox/scripts"
+    my_path="$my_path:/Users/jafischer/Library/Application Support/JetBrains/Toolbox/scripts"
   elif is_wsl; then
     my_path="$my_path:/home/linuxbrew/.linuxbrew/bin"
     my_path="$my_path:/opt/apache-maven-3.6.3/bin"
@@ -281,7 +281,7 @@ rc_setup_bash_prompt() {
   # TODO: only add these if the time they take is < 250ms?
   # For now, omit branch and namespace on WSL because they're just too slow.
   if is_wsl; then
-    PS1=$PS1_dir'\n'$PS1_timestamp' \$ '
+    PS1=$PS1_dir$PS1_branch'\n'$PS1_timestamp' \$ '
   else
     PS1=$PS1_dir$PS1_branch$PS1_ns'\n'$PS1_timestamp' \$ '
   fi
