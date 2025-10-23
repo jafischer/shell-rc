@@ -31,7 +31,7 @@ up() {
 # Here are the methods used to find a match (if a directory with the exact name isn't found)
 #
 # 1. A list of personalized shortcuts, e.g. "en" for my "kamaji-eliot-ness" repo.
-# 2. Since most of our git repos consist of multiple words seperated by hyphens, do a fuzzy search in $CDPATH
+# 2. Since most of our git repos consist of multiple words separated by hyphens, do a fuzzy search in $CDPATH
 #    using each letter as the start of a word. In other words, "crc" will match "capone-report-collector",
 #    "ken" will match "kamaji-eliot-ness", and so on.
 choosedir() {
@@ -73,7 +73,7 @@ choosedir() {
   esac
 
   # Search for the directory in $CDPATH. (Note: we don't actually have to do this, since the cd
-  # command will automatically use CDPATH, but we're searching CDPATH anyway for the fuzzy match; and also we
+  # command will automatically use CDPATH, but we're searching CDPATH anyway for the fuzzy match; and we
   # use this for the launch_ide function as well).
   for path_dir in ${CDPATH//:/ }; do
     # The added "eval" is there to expand ~ into the home dir.
@@ -85,11 +85,17 @@ choosedir() {
       echo "$expanded_dir"
       return 0
     fi
+  done
 
-    # Fuzzy search: e.g. "ken" will match with kamaji-eliot-ness.
-    # So we want to convert the letters in "$dir" to a regular expression
-    # that will find hyphenated words starting with each letter.
-    # E.g. "ken" --> "k[^-]*-e[^-]*-n[^-]*$"
+  # Fuzzy search: e.g. "ken" will match with kamaji-eliot-ness.
+  # So we want to convert the letters in "$dir" to a regular expression
+  # that will find hyphenated words starting with each letter.
+  # E.g. "ken" --> "k[^-]*-e[^-]*-n[^-]*$"
+  for path_dir in ${CDPATH//:/ }; do
+    # The added "eval" is there to expand ~ into the home dir.
+    path_dir="$(eval echo ${path_dir})"
+    expanded_dir="$(eval echo ${path_dir}/$dir)"
+
     # shellcheck disable=SC2001
     regex=$(echo $dir | sed -e 's/\(.\)/\1[^-]*-/g')
     log_debug "First substitution: $regex"
@@ -102,6 +108,7 @@ choosedir() {
     local_dirs=$(find . -maxdepth 1 -type d ! -name .)
 
     for local_dir in $local_dirs; do
+      log_debug "Does $local_dir match?"
       echo "$local_dir" | grep "^[.]/$regex" >& /dev/null
       # shellcheck disable=SC2181
       if [[ $? == 0 ]]; then
@@ -408,9 +415,9 @@ if is_mac; then
 
   meldhead() {
     local lines=$1 f1="$2" f2="$3"
-    head -n $lines "$f1" > /tmp/$(basename "$f1")-head
-    head -n $lines "$f2" > /tmp/$(basename "$f2")-head
-    meld /tmp/$(basename "$f1")-head /tmp/$(basename "$f2")-head
+    head -n $lines "$f1" > "/tmp/$(basename "$f1")-head"
+    head -n $lines "$f2" > "/tmp/$(basename "$f2")-head"
+    meld "/tmp/$(basename "$f1")-head" "/tmp/$(basename "$f2")-head"
   }
 
 elif is_wsl; then
