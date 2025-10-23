@@ -183,4 +183,4 @@ fi
 # Rust-specific aliases
 alias cfmt='cargo +nightly fmt --all'
 alias cversion="cargo metadata --format-version 1 --no-deps | jq .packages[0].version | sed -e 's/\"//g'"
-
+alias ctest='cargo test --workspace --all'
