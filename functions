@@ -526,7 +526,16 @@ xa() {
 # Creates a new script and makes it executable.
 newscript() {
   local name="$1"
-  echo -e "#!/bin/bash\n" > "$name"
+  if [[ -z "$name" ]]; then
+    log_error "No script name given"
+    return 1
+  fi
+  if [[ -e "$name" ]]; then
+    log_error "Script '$name' already exists"
+    return 1
+  fi
+
+  cp "$STARTUP_DIR/newscript-template" "$name"
   chmod +x "$name"
   # + option means go to last line
   vi + "$name"

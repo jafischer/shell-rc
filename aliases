@@ -135,6 +135,8 @@ alias gpull='git fetch --prune; git pull'
 alias gchmod='git update-index --chmod=+x'
 # See https://github.sie.sony.com/SIE/safety-scripts/blob/main/git-url.sh
 is_installed git-url.sh && alias gurl='git-url.sh'
+# Switch to main branch and pull
+alias gmain='git checkout main; gpull'
 
 ###
 ### sk8s aliases (see https://github.sie.sony.com/jafischer/sk8s)
