@@ -91,7 +91,7 @@ rc_set_path() {
     my_path="$my_path$(rc_add_path '/Users/jafischer/Library/Application Support/JetBrains/Toolbox/scripts')"
   elif is_wsl; then
     my_path="$my_path$(rc_add_path /home/linuxbrew/.linuxbrew/bin)"
-    my_path="$my_path$(rc_add_path /opt/apache-maven-3.6.3/bin)"
+    my_path="$my_path$(rc_add_path /home/linuxbrew/.linuxbrew/opt/openjdk@21/bin)"
   fi
 
   my_path="$my_path$(rc_add_path $HOME/src/safety-scripts)"

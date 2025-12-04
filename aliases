@@ -178,8 +178,6 @@ alias od-hexword='od -x'
 if is_wsl; then
   # GNU date is the default on Linux.
   alias gdate=date
-  # For some reason running the windows git.exe is significantly faster than running the linux git binary.
-  alias git=git.exe
 fi
 
 # Rust-specific aliases
