@@ -80,21 +80,21 @@ rc_set_path() {
     # because I'll often grep for something in ~/bin/* and grep can be really slow when searching
     # large binary files...
     my_path="$HOME/bin/binaries"
-    my_path="$my_path:$HOME/bin"
-    my_path="$my_path:/usr/local/mysql/bin"
-    my_path="$my_path:/Library/Java/JavaVirtualMachines/current/Contents/Home/bin"
-    my_path="$my_path:/usr/local/MacGPG2/bin"
-    my_path="$my_path:/Library/Apple/usr/bin"
-    my_path="$my_path:$HOME/go/go1.21.5/bin"
-    my_path="$my_path:$HOME/go/bin"
-    my_path="$my_path:/Users/jafischer/Library/Application Support/JetBrains/Toolbox/scripts"
+    my_path="$my_path$(rc_add_path $HOME/bin)"
+    my_path="$my_path$(rc_add_path /usr/local/mysql/bin)"
+    my_path="$my_path$(rc_add_path /Library/Java/JavaVirtualMachines/current/Contents/Home/bin)"
+    my_path="$my_path$(rc_add_path /usr/local/MacGPG2/bin)"
+    my_path="$my_path$(rc_add_path $HOME/go-sdk/go1.24.1/bin)"
+    my_path="$my_path$(rc_add_path $HOME/go/bin)"
+    my_path="$my_path$(rc_add_path /opt/homebrew/bin)"
+    my_path="$my_path$(rc_add_path /opt/homebrew/sbin)"
+    my_path="$my_path$(rc_add_path '/Users/jafischer/Library/Application Support/JetBrains/Toolbox/scripts')"
   elif is_wsl; then
-    my_path="$my_path:/home/linuxbrew/.linuxbrew/bin"
-    my_path="$my_path:/opt/apache-maven-3.6.3/bin"
+    my_path="$my_path$(rc_add_path /home/linuxbrew/.linuxbrew/bin)"
+    my_path="$my_path$(rc_add_path /opt/apache-maven-3.6.3/bin)"
   fi
 
-  my_path="$my_path:$HOME/src/safety-scripts"
-  my_path="$my_path:$HOME/src/garbo-cpp/cmake-build-release"
+  my_path="$my_path$(rc_add_path $HOME/src/safety-scripts)"
   # Many of my repos have a scripts directory, and I'm tired of typing "./scripts/xxx"
   my_path="$my_path:./scripts"
 
@@ -107,7 +107,17 @@ rc_set_path() {
   fi
 
   # Paths for the cd command to search.
-  export CDPATH="$SRC_DIR:$MYSRC_DIR:$SIE_DIR:$HOME:$_3RDPARTY_DIR:$HOME/OneDrive/Documents:$ICLOUD_DIR/Documents"
+  # Note: CDPATH must include "." -- it's not implicit!
+  export CDPATH=".:$SRC_DIR:$MYSRC_DIR:$SIE_DIR:$HOME:$_3RDPARTY_DIR:$HOME/OneDrive/Documents:$ICLOUD_DIR/Documents"
+}
+
+rc_add_path() {
+  local dir_to_add="$1"
+  if [[ -d "$dir_to_add" ]]; then
+    echo ":$dir_to_add"
+  else
+    log_error "Path dir $dir_to_add doesn't exist"
+  fi
 }
 
 rc_aliases_and_functions() {
@@ -252,7 +262,7 @@ rc_setup_bash_prompt() {
   # BUT... the PS1 prompt understands \e, and not \x1b...
   # So in other words I can't use the color variables I've defined.
   PS1_dir='[\e[1;33mdir: \e[1;36m\w\e[0m] '
-  if [[ "$TERM_PROGRAM" == "Apple_Terminal" || is_wsl ]]; then
+  if [[ "$TERM_PROGRAM" == "Apple_Terminal" ]] || is_wsl; then
     ps1_branch() {
       # Built-in BSD date doesn't do nanoseconds, so I installed gdate.
       local t1=$(gdate +%s%N)
@@ -301,7 +311,7 @@ rc_setup_zsh_prompt() {
   PS1_dir='%F{11}dir: %F{cyan}%~%f '
 
   # shellcheck disable=SC2078
-  if [[ "$TERM_PROGRAM" == "Apple_Terminal" || is_wsl ]]; then
+  if [[ "$TERM_PROGRAM" == "Apple_Terminal" ]] || is_wsl; then
     ps1_branch() {
       echo_no_newline "$(git status 2>&1 | sed -e "s|fatal:.*|On branch: N/A|" | grep "On branch" | cut -f 3 -d' ')"
     }
@@ -349,7 +359,10 @@ rc_finish_up() {
   # shellcheck disable=SC1090
   source ~/.gimme-aws-creds-xaws
 
+  local save_path="$PATH"
+  # I don't like how brew puts itself at the front of the path.
   [ -e /opt/homebrew/bin/brew ] && eval "$(/opt/homebrew/bin/brew shellenv)"
+  export PATH="$save_path"
   [ -e "$HOME/.nvm" ] && {
     export NVM_DIR="$HOME/.nvm"
     . "$NVM_DIR/nvm.sh"  # This loads nvm
