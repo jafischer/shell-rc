@@ -2,8 +2,12 @@
 # Note: the hash-bang above was only added so that my IDE treats this as a shell script. But this script must be
 # sourced, not executed from the command line.
 
-[[ $SHELL == /bin/bash ]] && STARTUP_DIR="$(dirname ${BASH_SOURCE[0]})"
-[[ $SHELL == /bin/zsh ]] && STARTUP_DIR="${0:a:h}"
+# Bash and zsh have totally different ways of getting the path of the current script:
+if [[ -n "${BASH_SOURCE[0]}" ]];then
+  STARTUP_DIR="$(dirname "${BASH_SOURCE[0]}")"
+else
+  STARTUP_DIR="${0:a:h}"
+fi
 
 # Define a bunch of functions for organization & readability, then call "rc_main" at the end to kick it all off.
 rc_main() {
@@ -95,7 +99,7 @@ rc_set_path() {
   fi
 
   my_path="$my_path$(rc_add_path $HOME/src/safety-scripts)"
-  # Many of my repos have a scripts directory, and I'm tired of typing "./scripts/xxx"
+  # Most of my repos have a scripts directory, and I'm tired of typing "./scripts/xxx"
   my_path="$my_path:./scripts"
 
   # Combine the paths above with ":" as separator:
@@ -164,6 +168,9 @@ rc_shell_settings() {
     unsetopt CASE_GLOB
 
   elif is_bash; then
+    # Bash version 4+ supports recursive wildcards, e.g. **/*.txt
+    [[ $BASH_VERSION == 3* ]] || shopt -s globstar
+
     # Case-insensitive tab completion for the win:
     bind "set completion-ignore-case on"
     # This is so useful to me. Just hit tab once and it'll show you all the choices. Don't have to hit double-tab.

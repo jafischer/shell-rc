@@ -31,10 +31,16 @@ my_os() {
   fi
 }
 
+# Rather than using $SHELL to determine zsh vs bash, examine the current process. That way, starting a zsh subshell
+# when running bash, or a bash subshell when running zsh, will still work.
+current_shell() {
+  ps -p $$ | tail -n 1 | awk '{print $NF}'
+}
+
 is_bash() {
-  [[ $SHELL == /bin/bash ]]
+  [[ $(current_shell) == *bash ]]
 }
 
 is_zsh() {
-  [[ $SHELL == /bin/zsh ]]
+  [[ $(current_shell) == *zsh ]]
 }
