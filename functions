@@ -254,13 +254,13 @@ ip6() {
 }
 
 log() {
-  echo -e "$(date +%T)" "$CYAN$*$NC" 1>&2
+  echo -e "$CYAN$*$NC" 1>&2
 }
 
 log_debug() {
   # shellcheck disable=SC2154
   [[ -n "$DEBUG" ]] &&
-    echo -e "$(date +%T)" "$cyan$*$NC" 1>&2
+    echo -e "$cyan$*$NC" 1>&2
 }
 
 log_stdout() {
@@ -524,7 +524,7 @@ xa() {
 }
 
 # Creates a new script and makes it executable.
-newscript() {
+new-script() {
   local name="$1"
   if [[ -z "$name" ]]; then
     log_error "No script name given"
