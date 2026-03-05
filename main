@@ -61,6 +61,12 @@ rc_set_variables() {
   export EXINIT="source $HOME/.vimrc"
 
   [[ -d ~/go/go1.21.5 ]] && export GOROOT=~/go/go1.21.5
+
+  if is_mac; then
+    export PSSAI_API_KEY=$(security find-generic-password -w -a $(whoami) -s "PSSAI_API_KEY")
+    export ANTHROPIC_BASE_URL="https://gateway.ai.studios.playstation.com/anthropic"
+    export ANTHROPIC_API_KEY="$PSSAI_API_KEY"
+  fi
 }
 
 ### PERSONALIZE THIS
@@ -84,12 +90,12 @@ rc_set_path() {
     # because I'll often grep for something in ~/bin/* and grep can be really slow when searching
     # large binary files...
     my_path="$HOME/bin/binaries"
-    my_path="$my_path$(rc_add_path $HOME/bin)"
+    my_path="$my_path$(rc_add_path ~/bin)"
     my_path="$my_path$(rc_add_path /usr/local/mysql/bin)"
     my_path="$my_path$(rc_add_path /Library/Java/JavaVirtualMachines/current/Contents/Home/bin)"
     my_path="$my_path$(rc_add_path /usr/local/MacGPG2/bin)"
-    my_path="$my_path$(rc_add_path $HOME/go-sdk/go1.24.1/bin)"
-    my_path="$my_path$(rc_add_path $HOME/go/bin)"
+    my_path="$my_path$(rc_add_path ~/go-sdk/go1.24.1/bin)"
+    my_path="$my_path$(rc_add_path ~/go/bin)"
     my_path="$my_path$(rc_add_path /opt/homebrew/bin)"
     my_path="$my_path$(rc_add_path /opt/homebrew/sbin)"
     my_path="$my_path$(rc_add_path '/Users/jafischer/Library/Application Support/JetBrains/Toolbox/scripts')"
@@ -98,13 +104,14 @@ rc_set_path() {
     my_path="$my_path$(rc_add_path /home/linuxbrew/.linuxbrew/opt/openjdk@21/bin)"
   fi
 
-  my_path="$my_path$(rc_add_path $HOME/src/safety-scripts)"
+  my_path="$my_path$(rc_add_path ~/src/safety-scripts)"
+  my_path="$my_path$(rc_add_path ~/.local/bin)"
   # Most of my repos have a scripts directory, and I'm tired of typing "./scripts/xxx"
   my_path="$my_path:./scripts"
 
   # Combine the paths above with ":" as separator:
   if is_wsl; then
-    # On WSL I want $HOME/bin/binaries:$HOME/bin at the front of the path.
+    # On WSL I want ~/bin/binaries:~/bin at the front of the path.
     export PATH="$HOME/bin/binaries:$HOME/bin:$ORIG_PATH:$my_path"
   else
     export PATH="$ORIG_PATH:$my_path"
@@ -112,7 +119,7 @@ rc_set_path() {
 
   # Paths for the cd command to search.
   # Note: CDPATH must include "." -- it's not implicit!
-  export CDPATH=".:$SRC_DIR:$MYSRC_DIR:$SIE_DIR:$HOME:$_3RDPARTY_DIR:$HOME/OneDrive/Documents:$ICLOUD_DIR/Documents"
+  export CDPATH=".:$SRC_DIR:$MYSRC_DIR:$SIE_DIR:$HOME:$_3RDPARTY_DIR:$ICLOUD_DIR/Documents:$HOME/OneDrive/Documents"
 }
 
 rc_add_path() {
@@ -207,18 +214,17 @@ rc_setup_history(){
   # History config
   #-------------------------------------------------------------
 
-
   ### PERSONALIZE THIS
   # I like to keep my history in a git repository because I've had too many instances where somehow my
   # entire bash history file gets cleared, and I search my history a lot.
   # Note: if you do so, make sure you set the repo to private, because your history may contain passwords or other
   # secrets.
   # In fact I wrote a tool to scrub my history before committing it: https://github.com/jafischer/history-shrinker
-  export HISTFILE="$HOME/mysrc/shell-history/history-$(my_os)"
+  HISTFILE="$HOME/mysrc/shell-history/history-$(my_os)"
 
   if is_bash; then
     # cmdhist: Save all lines of a multiple-line command in the same history entry.  This allows easy re-editing of multi-line commands.
-    # histappend: History is appended to history file, not overwritten.
+    # histappend: history is appended to history file, not overwritten.
     # histreedit: user is given the opportunity to re-edit a failed history substitution
     # histverify: the results of history substitution are not immediately executed; user must press enter.
     shopt -s cmdhist histappend histreedit histverify
@@ -232,13 +238,13 @@ rc_setup_history(){
     # "history -a" causes all commands to be immediately appended to .bash_history, instead of only when the shell exits.
     # (useful for when using multiple terminal windows).
     if [[ -z "$PROMPT_COMMAND" ]] ; then
-      PROMPT_COMMAND="history -a"
+      PROMPT_COMMAND="history -a; check_histfile"
     elif [[ "$PROMPT_COMMAND" != *"history -a"* ]]; then
-      PROMPT_COMMAND="${PROMPT_COMMAND}; history -a"
+      PROMPT_COMMAND="${PROMPT_COMMAND}; history -a; check_histfile"
     fi
 
   elif is_zsh; then
-    export HISTFILE="$HOME/mysrc/shell-history/history-zsh-$(my_os)"
+    HISTFILE="$HOME/mysrc/shell-history/history-zsh-$(my_os)"
     setopt HIST_APPEND HIST_VERIFY HIST_IGNORE_DUPS HIST_IGNORE_SPACE EXTENDED_HISTORY HIST_REDUCE_BLANKS
     HISTSIZE=50000
     SAVEHIST=50000

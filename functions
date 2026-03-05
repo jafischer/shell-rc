@@ -551,3 +551,10 @@ if is_installed yq; then
     yq ". *= load(\"$override\")" "$default"
   }
 fi
+
+# Adding this to catch whatever the hell is truncating my history file...
+check_histfile() {
+  if (($(wc -l < $HISTFILE) < 5000)); then
+    log_error "HISTFILE has been truncated!"
+  fi
+}
