@@ -146,9 +146,10 @@ mycd() {
   # countless times.
   # But whenever I clone a new repo, I often forget to manually copy the hooks; so here, whenever I cd into
   # a git repo, I check to see if the hooks are present, and if not, I install them.
-  if [[ -d ./.git ]] && ! [[ -e ./.git/hooks/pre-commit ]] && [[ -d "$SRC_DIR/safety-scripts" ]]; then
-    log "Copying git hooks from $SRC_DIR/safety-scripts/git-hooks"
-    cp "$SRC_DIR/safety-scripts"/git-hooks/* .git/hooks
+  if [[ -d ./.git ]] && ! [[ -e ./.git/hooks/pre-commit ]]; then
+    log_error "NOTE: this repo has no git hooks. Run this:"
+    # shellcheck disable=SC2088
+    log_error "~/mysrc/git-hooks/install-git-hooks"
   fi
 }
 
@@ -264,7 +265,7 @@ log_debug() {
 }
 
 log_stdout() {
-  echo -e "${LC_INFO}$*$NC"
+  echo -e "${CYAN}$*$NC"
 }
 
 log_heading() {
