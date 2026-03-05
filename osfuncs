@@ -34,7 +34,14 @@ my_os() {
 # Rather than using $SHELL to determine zsh vs bash, examine the current process. That way, starting a zsh subshell
 # when running bash, or a bash subshell when running zsh, will still work.
 current_shell() {
-  ps -p $$ | tail -n 1 | awk '{print $NF}'
+  local shell
+  # "ps -p" output is PID TTY TIME CMDLINE
+  shell=$(ps -p $$ | tail -n 1 | awk '{print $4}')
+
+  # Interactive shell for some reason shows up as "-bash":
+  # 74076 ttys000    0:00.10 -bash
+  # So strip off any leading '-'
+  echo ${shell/#-/}
 }
 
 is_bash() {
