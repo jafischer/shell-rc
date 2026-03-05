@@ -136,7 +136,7 @@ alias gchmod='git update-index --chmod=+x'
 # See https://github.sie.sony.com/SIE/safety-scripts/blob/main/git-url.sh
 is_installed git-url.sh && alias gurl='git-url.sh'
 # Switch to main branch and pull
-alias gmain='git checkout main; gpull'
+alias gmain='git checkout main || git checkout master; gpull; git-delete-stale-branches'
 
 ###
 ### sk8s aliases (see https://github.sie.sony.com/jafischer/sk8s)
@@ -184,3 +184,6 @@ fi
 alias cfmt='cargo +nightly fmt --all'
 alias cversion="cargo metadata --format-version 1 --no-deps | jq .packages[0].version | sed -e 's/\"//g'"
 alias ctest='cargo test --workspace --all'
+
+# Reset the skuba login session expiry (for testing Sk8s)
+alias reset-skuba='sed -i "" -e "s/aws_session_expiration = .*/aws_session_expiration = $(fexpr $(date +%s)-50000)/" ~/.aws/credentials'
