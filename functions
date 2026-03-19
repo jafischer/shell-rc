@@ -407,15 +407,25 @@ if is_mac; then
   #
 
   meld() {
-    local location
+    local meld_path script_input
 
-    location=$(which meld) || { echo "meld not found in path"; return 1; }
+    meld_path=$(which meld) || { echo "meld not found in path"; return 1; }
 
     # The UI app needs to be run in the background, otherwise command line can't
     # be used again until app quits.
-    ( "$location" "$@" >&/dev/null & )
-    sleep 2
-    layout restore --app Meld
+    ( "$meld_path" "$@" >&/dev/null & )
+    sleep 1
+    # Meld has a nasty habit of appearing half on-screen, half off.
+    # So I use my layout app to move it
+    # (see https://github.com/jafischer/layout-rs)
+    is_installed layout && layout restore --app Meld
+    if is_installed osascript; then
+      script_input=$(printf "%s\n" \
+        "tell application \"Meld\"" \
+        "  activate" \
+        "end tell")
+      osascript <<< "$script_input"
+    fi
   }
 
   meldhead() {
