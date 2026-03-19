@@ -574,3 +574,36 @@ check_histfile() {
     log_error "HISTFILE has been truncated!"
   fi
 }
+
+git-delete-stale-branches() {
+  local branch branches
+  git fetch -p
+  branches=$(git branch -vv | awk '/^[^*].*: gone]/{print $1}')
+
+  if [[ -z $branches ]]; then
+    log "${GREEN}No stale branches."
+    return 0
+  fi
+
+  log_heading "Stale branches:"
+  for branch in $branches; do
+    # shellcheck disable=SC2154
+    log "$red$branch"
+  done
+
+  if prompt "Ready to delete the above branches? "; then
+    for branch in $branches; do
+      git branch -D "$branch"
+    done
+  fi
+}
+
+# Switch to main branch and pull
+gmain() {
+  local default_branch
+  default_branch=$(git remote show origin | sed -n '/HEAD branch/s/.*: //p') || return 1
+
+  git checkout "$default_branch"
+  gpull
+  git-delete-stale-branches
+}
