@@ -278,6 +278,18 @@ log_no_newline() {
   echo -en "${CYAN}$*$NC" 1>&2
 }
 
+prompt() {
+  echo -en "${YELLOW}$*$NC [Y/n] " 1>&2
+  local p
+  read -r p
+  if [[ -z ${p} ]] || [[ ${p} == y ]] || [[ ${p} == Y ]]; then
+    return 0
+  else
+    return 1
+  fi
+}
+
+
 # Since 'in' is a keyword, using 'inn'.
 # This function performs a command in the specified directory(ies).
 #
