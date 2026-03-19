@@ -17,7 +17,7 @@ alias cdicloud='pushd "${ICLOUD_DIR}"'
 # we need to source "aliases" before "functions".
 # Determine if a command is installed
 is_installed() {
-  command -v $1 >&/dev/null
+  command -v "$1" >&/dev/null
 }
 
 # ls aliases
@@ -105,7 +105,7 @@ alias uuidgen='echo_no_newline $(\uuidgen | tr "[:upper:]" "[:lower:]")'
 # Reverse the lines of a file.
 alias reverse='tail -r'
 # Curl with newline added to the end of the output
-alias curlnl='curl -w "\n"'
+alias curlnl="curl -w '\nStatus: %{http_code}\n'"
 # Show current UTC time
 alias utctime='date -u'
 # Shorter way of running the ubiquitous gradle build script.
@@ -114,14 +114,23 @@ alias gw='./gradlew'
 ###
 ### Convenient shortcuts for selecting the nth word of output.
 ###
+# shellcheck disable=SC2142
 alias awk1="awk '{print \$1}'"
+# shellcheck disable=SC2142
 alias awk2="awk '{print \$2}'"
+# shellcheck disable=SC2142
 alias awk3="awk '{print \$3}'"
+# shellcheck disable=SC2142
 alias awk4="awk '{print \$4}'"
+# shellcheck disable=SC2142
 alias awk5="awk '{print \$5}'"
+# shellcheck disable=SC2142
 alias awk6="awk '{print \$6}'"
+# shellcheck disable=SC2142
 alias awk7="awk '{print \$7}'"
+# shellcheck disable=SC2142
 alias awk8="awk '{print \$8}'"
+# shellcheck disable=SC2142
 alias awk9="awk '{print \$9}'"
 alias awklast="awk '{print \$NF}'"
 
@@ -133,10 +142,8 @@ alias gcm='git commit'
 alias gpush='git push origin'
 alias gpull='git fetch --prune; git pull'
 alias gchmod='git update-index --chmod=+x'
-# See https://github.sie.sony.com/SIE/safety-scripts/blob/main/git-url.sh
-is_installed git-url.sh && alias gurl='git-url.sh'
-# Switch to main branch and pull
-alias gmain='git checkout main || git checkout master; gpull; git-delete-stale-branches'
+# See https://github.sie.sony.com/SIE/safety-scripts/blob/scripts/git-url.sh
+is_installed git-url && alias gurl='git-url'
 
 ###
 ### sk8s aliases (see https://github.sie.sony.com/jafischer/sk8s)

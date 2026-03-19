@@ -10,7 +10,7 @@ is_absolute_path() {
 
 # Determine if a command is installed
 is_installed() {
-  command -v $1 >&/dev/null
+  command -v "$1" >&/dev/null
 }
 
 # Might seem silly, but it's amazing how much easier it is to type "up" than "cd .."
@@ -18,7 +18,7 @@ is_installed() {
 up() {
   local count=$1 i
   [[ -z $count ]] && count=1
-  for i in $(seq 1 $count); do
+  for i in $(seq 1 "$count"); do
     \cd .. || return 1
   done
 }
@@ -77,8 +77,8 @@ choosedir() {
   # use this for the launch_ide function as well).
   for path_dir in ${CDPATH//:/ }; do
     # The added "eval" is there to expand ~ into the home dir.
-    path_dir="$(eval echo ${path_dir})"
-    expanded_dir="$(eval echo ${path_dir}/$dir)"
+    path_dir="$(eval echo "${path_dir}")"
+    expanded_dir="$(eval echo "${path_dir}/$dir")"
 
     if [[ -d $expanded_dir ]]; then
       log_debug "Using exact match of path_dir/dir (${path_dir}/$dir) from CDPATH"
@@ -93,18 +93,18 @@ choosedir() {
   # E.g. "ken" --> "k[^-]*-e[^-]*-n[^-]*$"
   for path_dir in ${CDPATH//:/ }; do
     # The added "eval" is there to expand ~ into the home dir.
-    path_dir="$(eval echo ${path_dir})"
-    expanded_dir="$(eval echo ${path_dir}/$dir)"
+    path_dir="$(eval echo "${path_dir}")"
+    expanded_dir="$(eval echo "${path_dir}/$dir")"
 
     # shellcheck disable=SC2001
-    regex=$(echo $dir | sed -e 's/\(.\)/\1[^-]*-/g')
+    regex=$(echo "$dir" | sed -e 's/\(.\)/\1[^-]*-/g')
     log_debug "First substitution: $regex"
     # shellcheck disable=SC2001
-    regex=$(echo $regex | sed -e 's/-$/\$/')
+    regex=$(echo "$regex" | sed -e 's/-$/\$/')
     log_debug "2nd: $regex"
 
     # Use find to list files in the current directory that are directories.
-    pushd $path_dir >&/dev/null || { log_error "Invalid dir in CDPATH: '$path_dir'"; return 1; }
+    pushd "$path_dir" >&/dev/null || { log_error "Invalid dir in CDPATH: '$path_dir'"; return 1; }
     local_dirs=$(find . -maxdepth 1 -type d ! -name .)
 
     for local_dir in $local_dirs; do
@@ -114,7 +114,7 @@ choosedir() {
       if [[ $? == 0 ]]; then
         # Remove the "./" prefix
         local_dir="${local_dir/.\//}"
-        expanded_dir="$(eval echo ${path_dir}/$local_dir)"
+        expanded_dir="$(eval echo "${path_dir}/$local_dir")"
         log_debug "Using regex match of path_dir/dir (path_dir=${path_dir}, local_dir=$local_dir) from CDPATH"
         echo "$expanded_dir"
         # shellcheck disable=SC2164
@@ -128,7 +128,7 @@ choosedir() {
 
   log_debug "No match found for $dir"
   # Not found, so just echo the argument
-  echo $dir
+  echo "$dir"
 }
 
 mycd() {
@@ -137,15 +137,6 @@ mycd() {
 
   \cd "$target" || return 1
 
-  ### PERSONALIZE THIS
-  # (Actually there's nothing to personalize here, per se. Just a suggestion to clone the safety-scripts
-  # repo).
-  # I have some useful git hooks in https://github.sie.sony.com/SIE/safety-scripts.git. They prevent me
-  # from doing things like committing into the main branch by mistake, or committing code that I hadn't
-  # intended to commit (I use a "nocommit" comment to mark such code). They've save my butt
-  # countless times.
-  # But whenever I clone a new repo, I often forget to manually copy the hooks; so here, whenever I cd into
-  # a git repo, I check to see if the hooks are present, and if not, I install them.
   if [[ -d ./.git ]] && ! [[ -e ./.git/hooks/pre-commit ]]; then
     log_error "NOTE: this repo has no git hooks. Run this:"
     # shellcheck disable=SC2088
@@ -188,7 +179,8 @@ gogo() { launch_ide goland "$1"; }
 
 # st: open the specified directory in SourceTree
 st() {
-  local dir="$(choosedir "$1")"
+  local dir
+  dir="$(choosedir "$1")"
   if ! [[ -d "$dir" ]]; then
     echo "$dir not found"
     return 1
@@ -224,7 +216,7 @@ myvi() {
       fixedargs="$fixedargs $arg"
     done
 
-    ( gvim.exe $fixedargs >&/dev/null & )
+    ( gvim.exe "$fixedargs" >&/dev/null & )
     return
   }
 
@@ -233,7 +225,7 @@ myvi() {
 
 # Yes/no prompt
 ask() {
-  echo_no_newline "$@" '[y/n] ' ; read ans
+  echo_no_newline "$@" '[y/n] ' ; read -r ans
   case "$ans" in
     y*|Y*) return 0 ;;
     *) return 1 ;;
@@ -303,7 +295,7 @@ inn() {
   for dir in $dirs; do
     [[ ! -d $dir ]] && continue
     local result=0
-    pushd $dir >/dev/null || { echo -e $RED$dir is not a directory$NC; continue; }
+    pushd "$dir" >/dev/null || { echo -e "$RED$dir is not a directory$NC"; continue; }
 
     echo -e "\x1b[1;44;33mDir: $dir\tCmd: " "$@" "$NC"
 
@@ -330,7 +322,7 @@ fexpr() {
 # Search libraries in the current directory for a symbol
 findlib() {
   for f in *.a; do
-    nm $f | grep "$*" && echo $f
+    nm "$f" | grep "$*" && echo "$f"
   done
 }
 
@@ -344,7 +336,7 @@ h() {
     shift
   fi
 
-  history $count "$@"
+  history "$count" "$@"
 }
 
 # In zsh, the `history` command is aliased to `fc -l` and only shows the history since the shell was started, but
@@ -358,7 +350,7 @@ if is_zsh; then
       shift
     fi
 
-    fc -i -l -$count "$@"
+    fc -i -l "-$count" "$@"
   }
 fi
 
@@ -394,7 +386,7 @@ jdk() {
     exit 1
   }
 
-  sudo ln -s amazon-corretto-$1.jdk /Library/Java/JavaVirtualMachines/current
+  sudo ln -s "amazon-corretto-$1.jdk" /Library/Java/JavaVirtualMachines/current
 }
 
 if is_mac; then
@@ -416,8 +408,8 @@ if is_mac; then
 
   meldhead() {
     local lines=$1 f1="$2" f2="$3"
-    head -n $lines "$f1" > "/tmp/$(basename "$f1")-head"
-    head -n $lines "$f2" > "/tmp/$(basename "$f2")-head"
+    head -n "$lines" "$f1" > "/tmp/$(basename "$f1")-head"
+    head -n "$lines" "$f2" > "/tmp/$(basename "$f2")-head"
     meld "/tmp/$(basename "$f1")-head" "/tmp/$(basename "$f2")-head"
   }
 
@@ -470,12 +462,13 @@ elif is_wsl; then
       # Relative paths work as-is, because the windows process starts up with the Linux current directory.
       # Is this an absolute path?
       if [[ "$p" == "/"* ]]; then
-        local ubuntu_version=$(lsb_release -a | grep Release: | awk2)
+        local ubuntu_version
+        ubuntu_version=$(lsb_release -a | grep Release: | awk2)
         p="//wsl\$/Ubuntu-$ubuntu_version$p"
       fi
     fi
 
-    echo $p
+    echo "$p"
   }
 fi
 
@@ -490,7 +483,8 @@ bell() {
   [[ -z $count ]] && count=1
 
   local i
-  for i in $(seq 1 $count); do
+  # shellcheck disable=SC2034
+  for i in $(seq 1 "$count"); do
     echo -en '\a'
   done
 }
@@ -554,7 +548,7 @@ fi
 
 # Adding this to catch whatever the hell is truncating my history file...
 check_histfile() {
-  if (($(wc -l < $HISTFILE) < 5000)); then
+  if (($(wc -l < "$HISTFILE") < 5000)); then
     log_error "HISTFILE has been truncated!"
   fi
 }

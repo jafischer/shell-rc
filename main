@@ -43,7 +43,7 @@ rc_set_variables() {
   # If you don't have iCloud storage, ignore this
   if [[ -d "$HOME/Library/Mobile Documents/com~apple~CloudDocs" ]]; then
     if ! [[ -e $HOME/iCloudDrive ]]; then
-      ln -s "$HOME/Library/Mobile Documents/com~apple~CloudDocs" $HOME/iCloudDrive
+      ln -s "$HOME/Library/Mobile Documents/com~apple~CloudDocs" "$HOME/iCloudDrive"
     fi
   fi
   ICLOUD_DIR=$HOME/iCloudDrive
@@ -63,7 +63,10 @@ rc_set_variables() {
   [[ -d ~/go/go1.21.5 ]] && export GOROOT=~/go/go1.21.5
 
   if is_mac; then
-    export PSSAI_API_KEY=$(security find-generic-password -w -a $(whoami) -s "PSSAI_API_KEY")
+    # PSSAI_API_KEY was added to keychain via:
+    # security add-generic-password -a $(whoami) -s PSSAI_API_KEY -w
+    # shellcheck disable=SC2155
+    export PSSAI_API_KEY=$(security find-generic-password -w -a "$(whoami)" -s "PSSAI_API_KEY")
     export ANTHROPIC_BASE_URL="https://gateway.ai.studios.playstation.com/anthropic"
     export ANTHROPIC_API_KEY="$PSSAI_API_KEY"
   fi
@@ -104,7 +107,7 @@ rc_set_path() {
     my_path="$my_path$(rc_add_path /home/linuxbrew/.linuxbrew/opt/openjdk@21/bin)"
   fi
 
-  my_path="$my_path$(rc_add_path ~/src/safety-scripts)"
+  my_path="$my_path$(rc_add_path ~/src/safety-scripts/bin)"
   my_path="$my_path$(rc_add_path ~/.local/bin)"
   # Most of my repos have a scripts directory, and I'm tired of typing "./scripts/xxx"
   my_path="$my_path:./scripts"
@@ -207,6 +210,9 @@ rc_color_variables() {
   black='\x1b[0;30m'; red='\x1b[0;31m'; green='\x1b[0;32m'; yellow='\x1b[0;33m'; blue='\x1b[0;34m'; pink='\x1b[0;35m'; cyan='\x1b[0;36m'; grey='\x1b[0;37m';
   BLACK='\x1b[1;30m'; RED='\x1b[1;31m'; GREEN='\x1b[1;32m'; YELLOW='\x1b[1;33m'; BLUE='\x1b[1;34m'; PINK='\x1b[1;35m'; CYAN='\x1b[1;36m'; WHITE='\x1b[1;37m'
   NC='\x1b[0m' # No Color
+
+  # Add dummy references to each color variable to avoid having to add "shellcheck disable=SC2034" comments on the unused ones.
+  echo "$black $red $green $yellow $blue $pink $cyan $grey $BLACK $RED $GREEN $YELLOW $BLUE $PINK $CYAN $WHITE $NC $CURSOR_UP $CLEAR_LINE" > /dev/null
 }
 
 rc_setup_history(){
@@ -247,6 +253,7 @@ rc_setup_history(){
     HISTFILE="$HOME/mysrc/shell-history/history-zsh-$(my_os)"
     setopt HIST_APPEND HIST_VERIFY HIST_IGNORE_DUPS HIST_IGNORE_SPACE EXTENDED_HISTORY HIST_REDUCE_BLANKS
     HISTSIZE=50000
+    # shellcheck disable=SC2034
     SAVEHIST=50000
   else
     log_error "Unsupported shell: $SHELL"
@@ -278,17 +285,11 @@ rc_setup_bash_prompt() {
   if [[ "$TERM_PROGRAM" == "Apple_Terminal" ]] || is_wsl; then
     ps1_branch() {
       # Built-in BSD date doesn't do nanoseconds, so I installed gdate.
-      local t1=$(gdate +%s%N)
       echo -n "$(git status 2>&1 | sed -e "s|fatal:.*|On branch: N/A|" | grep "On branch" | cut -f 3 -d' ')"
-      local t2=$(gdate +%s%N)
-      [[ -n $DEBUG ]] && echo " ($(((t2 - t1) / 1000000))ms)"
     }
     ps1_ns() {
       # Built-in BSD date doesn't do nanoseconds, so I installed gdate.
-      local t1=$(gdate +%s%N)
       echo -n "$(kubectl config view --minify -o jsonpath="{..namespace}")"
-      local t2=$(gdate +%s%N)
-      [[ -n $DEBUG ]] && echo " ($(((t2 - t1) / 1000000))ms)"
     }
     # shellcheck disable=SC2016
     PS1_branch='[\e[1;33mgit branch: \e[1;36m$(git status 2>&1 | sed -e "s|fatal:.*|On branch: N/A|" | grep "On branch" | cut -f 3 -d" ")\e[0m] '
