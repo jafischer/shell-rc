@@ -198,10 +198,10 @@ rc_setup_prompt() {
 
   if [[ "$TERM_PROGRAM" == "Apple_Terminal" ]] || is_wsl; then
     ps1_branch() {
-      echo_no_newline "$(git branch --show-current 2>&1 | sed -e "s|fatal:.*|N/A|")"
+      git branch --show-current 2>&1 | sed -e "s|fatal:.*|N/A|"
     }
     ps1_ns() {
-      echo_no_newline "$(kubectl config view --minify -o jsonpath="{..namespace}")"
+      kubectl config view --minify -o jsonpath="{..namespace}"
     }
 
     PS1_dir="$(rc_fix_prompt_codes '[@YELLOWdir: @CYAN@DIR@CLEAR] ')"
