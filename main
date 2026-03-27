@@ -1,81 +1,49 @@
-#!/bin/bash
-# Note: the hash-bang above was only added so that my IDE treats this as a shell script. But this script must be
-# sourced, not executed from the command line.
+# This script must be "sourced", not executed from the command line. My .bash_profile in my home directory
+# consists of one line:
+# source $HOME/mysrc/shell-rc/main
 
-# Bash and zsh have totally different ways of getting the path of the current script:
+# Bash and zsh have totally different ways of getting the path of the current script, so I need to do this
+# outside of the main function:
 if [[ -n "${BASH_SOURCE[0]}" ]];then
   STARTUP_DIR="$(dirname "${BASH_SOURCE[0]}")"
 else
   STARTUP_DIR="${0:a:h}"
 fi
 
-# Define a bunch of functions for organization & readability, then call "rc_main" at the end to kick it all off.
+# I find that bash scripts become far less intimidating if they're written like normal code...
+# So I define a main function, and separate all functionality into various functions that are called by main.
 rc_main() {
-  # Must call `osfuncs` first is_mac/is_wsl are used all over the place.
+  # Must call `osfuncs` first, since is_mac/is_wsl are used all over the place.
   source "$STARTUP_DIR/osfuncs"
+
+  rc_color_variables
+
+  if [[ -e "$STARTUP_DIR/.personalized" ]]; then
+    source "$STARTUP_DIR/.personalized"
+  else
+    echo -e "${RED}You haven't created $STARTUP_DIR/.personalized"
+    echo -e "${RED}Sourcing the default $STARTUP_DIR/personalized instead${NC}"
+    source "$STARTUP_DIR/personalized"
+  fi
 
   rc_set_variables
   rc_set_path
   rc_aliases_and_functions
   rc_shell_settings
-  rc_color_variables
   rc_setup_history
   rc_setup_prompt
   rc_finish_up
 }
 
-### PERSONALIZE THIS
 rc_set_variables() {
-  #-------------------------------------------------------------
-  # Set some environment variables (the ones with "export") and
-  # some variables used in my aliases and functions.
-  #-------------------------------------------------------------
-  # Set SRC_DIR to the location of your git repos.
-  SRC_DIR=~/src
-  is_wsl && SRC_DIR=/mnt/c/Users/jafischer.SIE/src
-  MYSRC_DIR=~/mysrc
-  is_wsl && MYSRC_DIR=/mnt/c/Users/jafischer.SIE/mysrc
-  SIE_DIR=~/sie
-  is_wsl && SIE_DIR=/mnt/c/Users/jafischer.SIE/sie
-  _3RDPARTY_DIR=~/3rdparty
-  is_wsl && _3RDPARTY_DIR=/mnt/c/Users/jafischer.SIE/3rdparty
-
-  # If you don't have iCloud storage, ignore this
-  if [[ -d "$HOME/Library/Mobile Documents/com~apple~CloudDocs" ]]; then
-    if ! [[ -e $HOME/iCloudDrive ]]; then
-      ln -s "$HOME/Library/Mobile Documents/com~apple~CloudDocs" "$HOME/iCloudDrive"
-    fi
-  fi
-  ICLOUD_DIR=$HOME/iCloudDrive
-  is_wsl && ICLOUD_DIR=/mnt/c/Users/jafischer.SIE/iCloudDrive
-
-  # When you download and install the "Corretto" version of java, it installs into
-  # /Library/Java/JavaVirtualMachines/amazon-corretto-NN.jdk, so I make a symlink
-  # called "current" to whatever version of the JDK I'm using
-  # (see the "jdk" function in ./functions).
-  [[ -d /Library/Java/JavaVirtualMachines/current/Contents/Home ]] &&
-    export JAVA_HOME=/Library/Java/JavaVirtualMachines/current/Contents/Home
-
   # Vi forever!
   export EDITOR=vim
   export EXINIT="source $HOME/.vimrc"
 
-  [[ -d ~/go/go1.21.5 ]] && export GOROOT=~/go/go1.21.5
-
-  if is_mac; then
-    # PSSAI_API_KEY was added to keychain via:
-    # security add-generic-password -a $(whoami) -s PSSAI_API_KEY -w
-    # shellcheck disable=SC2155
-    export PSSAI_API_KEY=$(security find-generic-password -w -a "$(whoami)" -s "PSSAI_API_KEY")
-    export ANTHROPIC_BASE_URL="https://gateway.ai.studios.playstation.com/anthropic"
-    export ANTHROPIC_API_KEY="$PSSAI_API_KEY"
-  fi
+  personalized_set_variables
 }
 
-### PERSONALIZE THIS
 rc_set_path() {
-  local my_path
-
   # Because this file might get sourced repeatedly (when I'm tweaking it and re-sourcing it),
   # we don't want to keep appending PATH to itself over and over.
   # So the first time this file is sourced, we'll store the path in $ORIG_PATH.
@@ -86,43 +54,7 @@ rc_set_path() {
     export PATH="$ORIG_PATH"
   fi
 
-  # Add components to path one at a time, just for readability.
-
-  if is_mac; then
-    # I have both ~/bin for scripts, and ~/bin/binaries for binary executables; this is
-    # because I'll often grep for something in ~/bin/* and grep can be really slow when searching
-    # large binary files...
-    my_path="$HOME/bin/binaries"
-    my_path="$my_path$(rc_add_path ~/bin)"
-    my_path="$my_path$(rc_add_path /usr/local/mysql/bin)"
-    my_path="$my_path$(rc_add_path /Library/Java/JavaVirtualMachines/current/Contents/Home/bin)"
-    my_path="$my_path$(rc_add_path /usr/local/MacGPG2/bin)"
-    my_path="$my_path$(rc_add_path ~/go-sdk/go1.24.1/bin)"
-    my_path="$my_path$(rc_add_path ~/go/bin)"
-    my_path="$my_path$(rc_add_path /opt/homebrew/bin)"
-    my_path="$my_path$(rc_add_path /opt/homebrew/sbin)"
-    my_path="$my_path$(rc_add_path '/Users/jafischer/Library/Application Support/JetBrains/Toolbox/scripts')"
-  elif is_wsl; then
-    my_path="$my_path$(rc_add_path /home/linuxbrew/.linuxbrew/bin)"
-    my_path="$my_path$(rc_add_path /home/linuxbrew/.linuxbrew/opt/openjdk@21/bin)"
-  fi
-
-  my_path="$my_path$(rc_add_path ~/src/safety-scripts/bin)"
-  my_path="$my_path$(rc_add_path ~/.local/bin)"
-  # Most of my repos have a scripts directory, and I'm tired of typing "./scripts/xxx"
-  my_path="$my_path:./scripts"
-
-  # Combine the paths above with ":" as separator:
-  if is_wsl; then
-    # On WSL I want ~/bin/binaries:~/bin at the front of the path.
-    export PATH="$HOME/bin/binaries:$HOME/bin:$ORIG_PATH:$my_path"
-  else
-    export PATH="$ORIG_PATH:$my_path"
-  fi
-
-  # Paths for the cd command to search.
-  # Note: CDPATH must include "." -- it's not implicit!
-  export CDPATH=".:$SRC_DIR:$MYSRC_DIR:$SIE_DIR:$HOME:$_3RDPARTY_DIR:$ICLOUD_DIR/Documents:$HOME/OneDrive/Documents"
+  personalized_set_path
 }
 
 rc_add_path() {
@@ -140,7 +72,6 @@ rc_aliases_and_functions() {
   #-------------------------------------------------------------
   source "$STARTUP_DIR/aliases"
   source "$STARTUP_DIR/functions"
-  is_bash && source "$STARTUP_DIR/completion"
 }
 
 rc_shell_settings() {
@@ -220,14 +151,6 @@ rc_setup_history(){
   # History config
   #-------------------------------------------------------------
 
-  ### PERSONALIZE THIS
-  # I like to keep my history in a git repository because I've had too many instances where somehow my
-  # entire bash history file gets cleared, and I search my history a lot.
-  # Note: if you do so, make sure you set the repo to private, because your history may contain passwords or other
-  # secrets.
-  # In fact I wrote a tool to scrub my history before committing it: https://github.com/jafischer/history-shrinker
-  HISTFILE="$HOME/mysrc/shell-history/history-$(my_os)"
-
   if is_bash; then
     # cmdhist: Save all lines of a multiple-line command in the same history entry.  This allows easy re-editing of multi-line commands.
     # histappend: history is appended to history file, not overwritten.
@@ -242,7 +165,7 @@ rc_setup_history(){
     HISTSIZE=50000
     HISTFILESIZE=50000
     # "history -a" causes all commands to be immediately appended to .bash_history, instead of only when the shell exits.
-    # (useful for when using multiple terminal windows).
+    # (useful for when using multiple terminal tabs/windows).
     if [[ -z "$PROMPT_COMMAND" ]] ; then
       PROMPT_COMMAND="history -a; check_histfile"
     elif [[ "$PROMPT_COMMAND" != *"history -a"* ]]; then
@@ -250,7 +173,6 @@ rc_setup_history(){
     fi
 
   elif is_zsh; then
-    HISTFILE="$HOME/mysrc/shell-history/history-zsh-$(my_os)"
     setopt HIST_APPEND HIST_VERIFY HIST_IGNORE_DUPS HIST_IGNORE_SPACE EXTENDED_HISTORY HIST_REDUCE_BLANKS
     HISTSIZE=50000
     # shellcheck disable=SC2034
@@ -262,80 +184,31 @@ rc_setup_history(){
 
 rc_setup_prompt() {
   #-------------------------------------------------------------
-  # Set up a fancy prompt to impress the ladies
+  # Set up a fancy prompt to impress the ladies...
   #-------------------------------------------------------------
-
-  is_bash && rc_setup_bash_prompt
-  is_zsh && rc_setup_zsh_prompt
-}
-
-rc_setup_bash_prompt() {
-  # The bash shell lets you customize your command prompt via the PS1 variable. You can just set it to a string,
-  # like "Hello!" but the real power comes with various special escape sequences.
-  # Note: by convention, PS1 tends to end with \$, which will be "$" if you're running normally,
-  # but "#" if you're running as root.
+  # The prompt will look like this (with colors):
+  #
+  # [dir: ~/mysrc/shell-rc] [git branch: main] [k8s ns: some-namespace]
+  # 10:28:31.787 $
 
   # Complete list of PS1 escapes: see
   # https://tldp.org/HOWTO/Bash-Prompt-HOWTO/bash-prompt-escape-sequences.html
+  # Or for zsh:
+  # https://zsh.sourceforge.io/Doc/Release/Prompt-Expansion.html#Prompt-Expansion
 
-  # Oddly, on MacOS, "echo -e" doesn't accept \e. It requires \x1b instead.
-  # BUT... the PS1 prompt understands \e, and not \x1b...
-  # So in other words I can't use the color variables I've defined.
-  PS1_dir='[\e[1;33mdir: \e[1;36m\w\e[0m] '
   if [[ "$TERM_PROGRAM" == "Apple_Terminal" ]] || is_wsl; then
     ps1_branch() {
-      # Built-in BSD date doesn't do nanoseconds, so I installed gdate.
-      echo -n "$(git status 2>&1 | sed -e "s|fatal:.*|On branch: N/A|" | grep "On branch" | cut -f 3 -d' ')"
-    }
-    ps1_ns() {
-      # Built-in BSD date doesn't do nanoseconds, so I installed gdate.
-      echo -n "$(kubectl config view --minify -o jsonpath="{..namespace}")"
-    }
-    # shellcheck disable=SC2016
-    PS1_branch='[\e[1;33mgit branch: \e[1;36m$(git status 2>&1 | sed -e "s|fatal:.*|On branch: N/A|" | grep "On branch" | cut -f 3 -d" ")\e[0m] '
-    # shellcheck disable=SC2016
-    PS1_ns='[\e[1;33mk8s ns: \e[1;36m$(kubectl config view --minify -o jsonpath="{..namespace}")\e[0m]'
-    # On the mac, `brew install coreutils` to get gdate
-    if is_installed gdate; then
-      # shellcheck disable=SC2016
-      PS1_timestamp='$(gdate +%H:%M:%S.%3N)'
-    else
-      # shellcheck disable=SC2016
-      PS1_timestamp='$(date +%H:%M:%S)'
-    fi
-  fi
-  # TODO: only add these if the time they take is < 250ms?
-  # For now, omit branch and namespace on WSL because they're just too slow.
-  if is_wsl; then
-    PS1=$PS1_dir$PS1_branch'\n'$PS1_timestamp' \$ '
-  else
-    PS1=$PS1_dir$PS1_branch$PS1_ns'\n'$PS1_timestamp' \$ '
-  fi
-}
-
-rc_setup_zsh_prompt() {
-  # See https://zsh.sourceforge.io/Doc/Release/Prompt-Expansion.html#Prompt-Expansion
-
-  # Enable the running of commands in PS1
-  setopt PROMPT_SUBST
-
-  # #~ : current directory, with ~ prefix if under $HOME.
-  # Note: %F{11} is bright yellow; I couldn't find a mnemonic that worked (e.g. %F{yellow,bold})
-  # See https://robotmoon.com/zsh-prompt-generator/
-  PS1_dir='%F{11}dir: %F{cyan}%~%f '
-
-  # shellcheck disable=SC2078
-  if [[ "$TERM_PROGRAM" == "Apple_Terminal" ]] || is_wsl; then
-    ps1_branch() {
-      echo_no_newline "$(git status 2>&1 | sed -e "s|fatal:.*|On branch: N/A|" | grep "On branch" | cut -f 3 -d' ')"
+      echo_no_newline "$(git branch --show-current 2>&1 | sed -e "s|fatal:.*|N/A|")"
     }
     ps1_ns() {
       echo_no_newline "$(kubectl config view --minify -o jsonpath="{..namespace}")"
     }
+
+    PS1_dir="$(rc_fix_prompt_codes '[@YELLOWdir: @CYAN@DIR@CLEAR] ')"
     # shellcheck disable=SC2016
-    PS1_branch='%F{11}git branch: %F{cyan}$(git status 2>&1 | sed -e "s|fatal:.*|On branch: N/A|" | grep "On branch" | cut -f 3 -d" ")%f '
+    PS1_branch="$(rc_fix_prompt_codes '[@YELLOWgit branch: @CYAN$(ps1_branch)@CLEAR] ')"
     # shellcheck disable=SC2016
-    PS1_ns='%F{11}k8s ns: %F{cyan}$(kubectl config view --minify -o jsonpath="{..namespace}")%f'
+    PS1_ns="$(rc_fix_prompt_codes '[@YELLOWk8s ns: @CYAN$(ps1_ns)@CLEAR]')"
     # On the mac, `brew install coreutils` to get gdate
     if is_installed gdate; then
       # shellcheck disable=SC2016
@@ -344,44 +217,59 @@ rc_setup_zsh_prompt() {
       # shellcheck disable=SC2016
       PS1_timestamp='$(date +%H:%M:%S)'
     fi
-  fi
-  # For now, omit branch and namespace on WSL because they're just too slow.
-  if is_wsl; then
-    export PS1=$PS1_dir$'\n'$PS1_timestamp' \$ '
-  else
-    export PS1=$PS1_dir$PS1_branch$PS1_ns$'\n'$PS1_timestamp' \$ '
+
+    # In zsh, you have to enable the running of commands in PS1
+    is_zsh && setopt PROMPT_SUBST
+
+    # TODO: only add these if the time they take is < 250ms?
+    # For now, omit branch and namespace on WSL because they're just too slow.
+    if is_wsl; then
+      PS1=$PS1_dir$PS1_branch$'\n'$PS1_timestamp' \$ '
+    else
+      PS1=$PS1_dir$PS1_branch$PS1_ns$'\n'$PS1_timestamp' \$ '
+    fi
   fi
 }
 
-### PERSONALIZE THIS
+rc_fix_prompt_codes() {
+  local prompt_yellow prompt_cyan prompt_clear prompt_dir
+
+  # Bash and zsh have completely different ways of defining colors in your prompt; so I will use @YELLOW, @CYAN,
+  # and @CLEAR in the definition, and use sed to convert that to the appropriate codes depending on the shell.
+  if is_bash; then
+    prompt_yellow='\\e[1;33m'
+    prompt_cyan='\\e[1;36m'
+    prompt_clear='\\e[0m]'
+    prompt_dir='\\w'
+  else
+    prompt_yellow='%F{11}'
+    prompt_cyan='%F{cyan}'
+    prompt_clear='%f'
+    prompt_dir='%~'
+  fi
+
+  echo "$@" | sed -e "s/@YELLOW/$prompt_yellow/g; s/@CYAN/$prompt_cyan/g; s/@CLEAR/$prompt_clear/g; s/@DIR/$prompt_dir/"
+}
+
 rc_finish_up() {
   #-------------------------------------------------------------
   # Miscellaneous
   #-------------------------------------------------------------
 
-  # Just in case I ever forget after adding a new file under .ssh or .secrets.
+  # Just in case I ever forget after adding a new file under .ssh:
   # All files in those directories should be only readable by me.
   chmod -R og-rwx ~/.ssh
-  [[ -d ~/.secrets ]] && chmod -R og-rwx ~/.secrets
 
   # Many tools will add something like the following commands to the end of your .bash_profile file.
   # Move them here.
-
   # shellcheck disable=SC1090
-  source ~/.cargo/env
-  # Gimme-aws-creds: credentials for AWS (https://github.sie.sony.com/SIE/gimme-aws-creds)
-  # shellcheck disable=SC1090
-  source ~/.gimme-aws-creds-xaws
+  [[ -e ~/.cargo/env ]] && source ~/.cargo/env
 
   local save_path="$PATH"
-  # I don't like how brew puts itself at the front of the path.
-  [ -e /opt/homebrew/bin/brew ] && eval "$(/opt/homebrew/bin/brew shellenv)"
+  # I don't like how brew puts itself at the front of the path, so I'm saving the PATH before, and
+  # setting it back after calling this brew script.
+  [[ -e /opt/homebrew/bin/brew ]] && eval "$(/opt/homebrew/bin/brew shellenv)"
   export PATH="$save_path"
-  [ -e "$HOME/.nvm" ] && {
-    export NVM_DIR="$HOME/.nvm"
-    . "$NVM_DIR/nvm.sh"  # This loads nvm
-    . "$NVM_DIR/bash_completion"  # This loads nvm bash_completion
-  }
 
   # Convert ~ to $HOME in PATH. Do this at the end to account for paths added by any sourced scripts above.
   export PATH="${PATH//\~/$HOME}"

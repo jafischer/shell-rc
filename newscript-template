@@ -8,7 +8,10 @@ main() {
 }
 
 set_globals() {
+  # shellcheck disable=SC2034
   SCRIPT_DIR=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
+
+  # Add any other globals here.
 }
 
 parse_options() {
@@ -17,6 +20,9 @@ parse_options() {
       help | --help)
         usage
         ;;
+
+      # Add other options here
+
       *)
         log_error "Unknown option: '$1'"
         usage
@@ -57,6 +63,8 @@ define_colors() {
   pink='\x1b[0;35m'
   cyan='\x1b[0;36m'
   grey='\x1b[0;37m'
+
+  # Bright versions of the colors
   BLACK='\x1b[1;30m'
   RED='\x1b[1;31m'
   GREEN='\x1b[1;32m'
@@ -65,7 +73,9 @@ define_colors() {
   PINK='\x1b[1;35m'
   CYAN='\x1b[1;36m'
   WHITE='\x1b[1;37m'
+
   NC='\x1b[0m' # No Color
+
   CURSOR_UP='\x1b[A'
   CLEAR_LINE='\x1b[K'
 

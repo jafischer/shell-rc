@@ -1,7 +1,3 @@
-#!/bin/bash
-# Note: the hash-bang above was only added so that my IDE knows this is a bash script. But this script must be
-# sourced, not executed from the command line.
-
 # Command to reload everything here file after I make changes.
 # shellcheck disable=SC2139
 alias reload="source $STARTUP_DIR/main"
@@ -78,7 +74,7 @@ alias en=echo_no_newline
 # Convenient short form of the find command. Just "fnd SomeFilePattern".
 alias fnd='find . -name '
 # Show all processes owned by me
-alias pu='ps -fU $UID'
+alias psme='ps -fU $UID'
 # Shutdown now
 alias s0="sudo shutdown -h now"
 # Shutdown and restart
@@ -142,30 +138,6 @@ alias gcm='git commit'
 alias gpush='git push origin'
 alias gpull='git fetch --prune; git pull'
 alias gchmod='git update-index --chmod=+x'
-# See https://github.sie.sony.com/SIE/safety-scripts/blob/scripts/git-url.sh
-is_installed git-url && alias gurl='git-url'
-
-###
-### sk8s aliases (see https://github.sie.sony.com/jafischer/sk8s)
-###
-alias 8l='sk8s login'
-alias 8h='sk8s health'
-alias 8pf='sk8s port-forward'
-alias 8rp='sk8s restart-pods'
-alias 8wp='sk8s watch-pods'
-alias 8dv='sk8s deploy-version'
-# This one's just for me while testing things:
-# run sk8s from my git repo instead of the one in my path.
-alias s='~/mysrc/sk8s/target/debug/sk8s'
-
-###
-### Skuba aliases
-###
-alias sk='skuba kubectl'
-alias skh='skuba helm'
-alias po='sk get pods'
-alias clus='skuba cluster'
-alias ns='skuba namespace'
 
 ###
 ### Docker aliases
@@ -173,9 +145,6 @@ alias ns='skuba namespace'
 alias dcls='docker container ls'
 alias dils='docker image ls'
 alias dcstopall='docker container stop `dcls | tail -n +2 | awk1`'
-
-# SSH to my 3D Printer's Raspberry Pi:
-alias sshpi='ssh -i ~/.ssh/jafischer.pem pi@fluidpi.local'
 
 # Friendly wrappers for od
 alias od-char='od -c'
@@ -191,6 +160,3 @@ fi
 alias cfmt='cargo +nightly fmt --all'
 alias cversion="cargo metadata --format-version 1 --no-deps | jq .packages[0].version | sed -e 's/\"//g'"
 alias ctest='cargo test --workspace --all'
-
-# Reset the skuba login session expiry (for testing Sk8s)
-alias reset-skuba='sed -i "" -e "s/aws_session_expiration = .*/aws_session_expiration = $(fexpr $(date +%s)-50000)/" ~/.aws/credentials'

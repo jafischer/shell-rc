@@ -1,7 +1,3 @@
-#!/bin/bash
-# Note: the hash-bang above was only added so that my IDE knows this is a bash script. But this script must be
-# sourced, not executed from the command line.
-
 # Determine if a path is absolute or relative
 is_absolute_path() {
   local p="$1"
@@ -14,7 +10,7 @@ is_installed() {
 }
 
 # Might seem silly, but it's amazing how much easier it is to type "up" than "cd .."
-# And as an added bonus, you can supply an argument to jump up several directories at once.
+# And as an added bonus, you can supply a numeric argument to jump up several directories at once.
 up() {
   local count=$1 i
   [[ -z $count ]] && count=1
@@ -25,15 +21,15 @@ up() {
 
 # Find a directory using various heuristics. This is used by "mycd" and the various IDE-launching functions below.
 # Example:
-# $ choosedir crc
-# /Users/jafischer/src/capone-report-collector
+# $ choosedir bfs
+# /Users/jafischer/mysrc/bevy-fluid-sim
 #
 # Here are the methods used to find a match (if a directory with the exact name isn't found)
 #
 # 1. A list of personalized shortcuts, e.g. "en" for my "kamaji-eliot-ness" repo.
 # 2. Since most of our git repos consist of multiple words separated by hyphens, do a fuzzy search in $CDPATH
-#    using each letter as the start of a word. In other words, "crc" will match "capone-report-collector",
-#    "ken" will match "kamaji-eliot-ness", and so on.
+#    using each letter as the start of a word. In other words, "bfs" will match "bevy-fluid-sim",
+#    "sr" will match "shell-rc", and so on.
 choosedir() {
   local dir="$1" path_dir expanded_dir regex local_dir local_dirs
 
@@ -47,30 +43,9 @@ choosedir() {
   is_absolute_path "$1" && [[ -d "$dir" ]] && { echo "$dir"; return 0; }
   ! is_absolute_path "$1" && [[ -d "./$dir" ]] && { echo "./$dir"; return 0; }
 
-  # Check list of shortcuts for some frequent destinations:
-  ### PERSONALIZE THIS
-  case $dir in
-    en)   echo "$SRC_DIR/kamaji-eliot-ness"; return 0 ;;
-    ga)   echo "$SRC_DIR/kamaji-garbo"; return 0 ;;
-    gc)   echo "$SRC_DIR/garbo-cpp"; return 0 ;;
-    sp)   echo "$SRC_DIR/speakeasy2"; return 0 ;;
-    sc)   echo "$SRC_DIR/safety-commons"; return 0 ;;
-    ss)   echo "$SRC_DIR/safety-scripts"; return 0 ;;
-    lf)   echo "$SRC_DIR/lego-framework"; return 0 ;;
-    3)    echo "$SRC_DIR/../3rdparty"; return 0 ;;
-    my)   echo "$SRC_DIR/../mysrc"; return 0 ;;
-    p)    echo "$SRC_DIR/pickford"; return 0 ;;
-    pf)   echo "$SRC_DIR/pathfinder"; return 0 ;;
-    prof) echo "$SRC_DIR/pathfinder/sdk/target/samples/sample_code/playstation_network/api_webapi_profanity"; return 0 ;;
-    dl)   echo ~/Downloads; return 0 ;;
-    v)    echo "$ICLOUD_DIR/voroncfg"; return 0 ;;
-    m)    echo "$SRC_DIR/meccano"; return 0 ;;
-    gb)   echo "$SRC_DIR/gatsby"; return 0 ;;
-    sk)   echo "$SRC_DIR/../mysrc/sk8s"; return 0 ;;
-    pa)   echo "$SRC_DIR/presidio-analyzer"; return 0 ;;
-    pa2)  echo "$SRC_DIR/presidio-anonymizer"; return 0 ;;
-    cap)  echo "$SRC_DIR/capone"; return 0 ;;
-  esac
+  # Check list of shortcuts for some frequent destinations. This function is to be defined in
+  # the `personalized` file.
+  personalized_choosedir "$dir" && return 0
 
   # Search for the directory in $CDPATH. (Note: we don't actually have to do this, since the cd
   # command will automatically use CDPATH, but we're searching CDPATH anyway for the fuzzy match; and we
@@ -87,10 +62,9 @@ choosedir() {
     fi
   done
 
-  # Fuzzy search: e.g. "ken" will match with kamaji-eliot-ness.
-  # So we want to convert the letters in "$dir" to a regular expression
+  # Fuzzy search:
+  # We want to convert the letters in "$dir" to a regular expression
   # that will find hyphenated words starting with each letter.
-  # E.g. "ken" --> "k[^-]*-e[^-]*-n[^-]*$"
   for path_dir in ${CDPATH//:/ }; do
     # The added "eval" is there to expand ~ into the home dir.
     path_dir="$(eval echo "${path_dir}")"
@@ -105,7 +79,7 @@ choosedir() {
 
     # Use find to list files in the current directory that are directories.
     pushd "$path_dir" >&/dev/null || { log_error "Invalid dir in CDPATH: '$path_dir'"; return 1; }
-    local_dirs=$(find . -maxdepth 1 -type d ! -name .)
+    local_dirs=$(find . -depth 1  -maxdepth 1 -type d)
 
     for local_dir in $local_dirs; do
       log_debug "Does $local_dir match?"
@@ -137,10 +111,11 @@ mycd() {
 
   \cd "$target" || return 1
 
-  if [[ -d ./.git ]] && ! [[ -e ./.git/hooks/pre-commit ]]; then
+  # See https://github.com/jafischer/git-hooks for my git hooks.
+  if [[ -d ./.git ]] && ! [[ -e ./.git/hooks/pre-commit && -e "$MYSRC_DIR/git-hooks/install-git-hooks" ]]; then
     log_error "NOTE: this repo has no git hooks. Run this:"
     # shellcheck disable=SC2088
-    log_error "~/mysrc/git-hooks/install-git-hooks"
+    log_error "$MYSRC_DIR/git-hooks/install-git-hooks"
   fi
 }
 
@@ -204,9 +179,9 @@ myvi() {
 
   is_wsl && {
     # On Windows/WSL, it's a tad more complicated...
-    local fixedargs
+    local fixedargs arg
 
-    # Since gvim.exe is a Windows exe, need to convert any linux paths to \\wsl$\Ubuntu-18.04\...
+    # Since gvim.exe is a Windows exe, need to convert any linux paths to \\wsl$\Ubuntu-NN.NN\...
     for arg in "$@"; do
       if [[ -n $(readlink "$arg") ]]; then
         arg=$(readlink "$arg")
@@ -225,8 +200,9 @@ myvi() {
 
 # Yes/no prompt
 ask() {
-  echo_no_newline "$@" '[y/n] ' ; read -r ans
-  case "$ans" in
+  local answer
+  echo_no_newline "$@" '[y/n] ' ; read -r answer
+  case "$answer" in
     y*|Y*) return 0 ;;
     *) return 1 ;;
   esac
@@ -301,7 +277,7 @@ prompt() {
 # inn ./\* doSomething \> something.out
 #
 inn() {
-  local dirs=$1
+  local dirs=$1 dir
   shift
 
   for dir in $dirs; do
@@ -333,6 +309,7 @@ fexpr() {
 
 # Search libraries in the current directory for a symbol
 findlib() {
+  local f
   for f in *.a; do
     nm "$f" | grep "$*" && echo "$f"
   done
@@ -379,12 +356,6 @@ utc-to-local() {
   date +"%F %T" -d "${t} +0"
 }
 
-# Run "sk8s logs" and then launch vim on the log directory.
-slog() {
-  sk8s logs "$@"
-  [[ -d sk8s-logs ]] && vi sk8s-logs
-}
-
 # Switch between JDK versions
 jdk() {
   [[ -z $1 ]] && { 
@@ -426,13 +397,6 @@ if is_mac; then
         "end tell")
       osascript <<< "$script_input"
     fi
-  }
-
-  meldhead() {
-    local lines=$1 f1="$2" f2="$3"
-    head -n "$lines" "$f1" > "/tmp/$(basename "$f1")-head"
-    head -n "$lines" "$f2" > "/tmp/$(basename "$f2")-head"
-    meld "/tmp/$(basename "$f1")-head" "/tmp/$(basename "$f2")-head"
   }
 
 elif is_wsl; then
@@ -494,6 +458,13 @@ elif is_wsl; then
   }
 fi
 
+meldhead() {
+  local lines=$1 f1="$2" f2="$3"
+  head -n "$lines" "$f1" > "/tmp/$(basename "$f1")-head"
+  head -n "$lines" "$f2" > "/tmp/$(basename "$f2")-head"
+  meld "/tmp/$(basename "$f1")-head" "/tmp/$(basename "$f2")-head"
+}
+
 # URL-encode the arguments
 urlencode() {
   echo_no_newline "$@"| jq -sRr '@uri'
@@ -516,30 +487,6 @@ sort-by-line-length() {
   awk '{ print length, $0 }' | sort -n -s | cut -d" " -f2-
 }
 
-# "xa", short for "xaws Aloy", but the with added benefit of highlighting the
-# desired role in the bewilderingly long list of role choices.
-#
-# Example:
-# xa dev16
-xa() {
-  local role=$1 save_ps1="$PS1"
-
-  if [[ -z $role ]]; then
-    xaws Aloy
-  else
-    # Learn something new every day. The "2> >(...)" syntax redirects ONLY
-    # stderr to the process within the parentheses.
-    xaws Aloy 2> >(
-      # This funky perl line is just to get the desired role highlighted.
-      # And we're using Perl rather than sed because OSX sed doesn't support \x, but perl does!
-      perl -p -e "s/Account:/\x1b\[0mAccount:/; s/(Account: .*$role)/\x1b\[1;32m\$1/; s/Selections/\x1b\[0mSelections/"
-    )
-  fi
-
-  # I hate how xaws adds "(gimme-aws-creds)" to the start of the prompt.
-  PS1="$save_ps1"
-}
-
 # Creates a new script and makes it executable.
 new-script() {
   local name="$1"
@@ -560,7 +507,7 @@ new-script() {
 
 if is_installed yq; then
   # Combined two yaml files, e.g.
-  # merge_yaml clients.yaml clients-e1-np.yaml
+  # merge_yaml clients.yaml clients-prod.yaml
   merge_yaml() {
     local default="$1" override="$2"
 
@@ -598,7 +545,7 @@ git-delete-stale-branches() {
   fi
 }
 
-# Switch to main branch and pull
+# Switch to main branch and pull. Useful after merging a PR.
 gmain() {
   local default_branch
   default_branch=$(git remote show origin | sed -n '/HEAD branch/s/.*: //p') || return 1

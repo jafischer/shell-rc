@@ -1,7 +1,3 @@
-#!/bin/bash
-# Note: the hash-bang above was only added so that my IDE knows this is a bash script. But this script must be
-# sourced, not executed from the command line.
-
 # Some functions to determine what system we're running on (I use the same bash scripts on Windows/WSL and
 # the Mac.
 # They're not in the "functions" file because they are used in "aliases", but "aliases" must be sourced
@@ -41,7 +37,7 @@ current_shell() {
   # Interactive shell for some reason shows up as "-bash":
   # 74076 ttys000    0:00.10 -bash
   # So strip off any leading '-'
-  echo ${shell/#-/}
+  echo "${shell/#-/}"
 }
 
 is_bash() {

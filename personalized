@@ -1,0 +1,116 @@
+#-------------------------------------------------------------
+# Here you can add directories to your PATH variable.
+# You can use the `rc_add_path` function, defined in main, for
+# convenience.
+# You also define the CDPATH variable here.
+#-------------------------------------------------------------
+personalized_set_path() {
+  local my_path cd_home
+
+  # I tend to have a *lot* of git repos cloned. So rather than have them all in one place, I
+  # organize them into 3 directories:
+  #
+  # ~/src      -- the set of work projects that I am involved in.
+  # ~/mysrc    -- my personal, non-work-related projects.
+  # ~/3rdparty -- various repos from github.com that I clone locally for learning purposes.
+
+  # When I am working in WSL (Windows Subsystem for Linux), I prefer to keep all my git repos in
+  # the Windows filesystem, and cd into them directly, rather than via symlinks in my linux home directory.
+  if is_wsl; then
+    cd_home="/mnt/c/Users/$(whoami)"
+  else
+    cd_home="$HOME"
+  fi
+
+  SRC_DIR=$cd_home/src
+  MYSRC_DIR=$cd_home/mysrc
+  _3RDPARTY_DIR=$cd_home/3rdparty
+  ICLOUD_DIR=$cd_home/iCloudDrive
+
+  # Add components to path one at a time, just for readability.
+
+  if is_mac; then
+    # I have both ~/bin for scripts, and ~/bin/binaries for binary executables; this is
+    # because I'll often grep for something in ~/bin/* and grep can be really slow when searching
+    # large binary files...
+    my_path="$HOME/bin/binaries"
+    my_path="$my_path$(rc_add_path ~/bin)"
+    my_path="$my_path$(rc_add_path /opt/homebrew/bin)"
+    my_path="$my_path$(rc_add_path /opt/homebrew/sbin)"
+    my_path="$my_path$(rc_add_path "$HOME/Library/Application Support/JetBrains/Toolbox/scripts")"
+  elif is_wsl; then
+    my_path="$my_path$(rc_add_path /home/linuxbrew/.linuxbrew/bin)"
+    my_path="$my_path$(rc_add_path /home/linuxbrew/.linuxbrew/opt/openjdk@21/bin)"
+  fi
+
+  my_path="$my_path$(rc_add_path ~/.local/bin)"
+  # Most of my repos have a scripts directory, and I'm tired of typing "./scripts/xxx"
+  my_path="$my_path:./scripts"
+
+  # Combine the paths above with ":" as separator:
+  if is_wsl; then
+    # On WSL I want ~/bin/binaries:~/bin at the front of the path.
+    export PATH="$HOME/bin/binaries:$HOME/bin:$ORIG_PATH:$my_path"
+  else
+    export PATH="$ORIG_PATH:$my_path"
+  fi
+
+  # Paths for the cd command to search.
+  # Note: CDPATH must include "." -- it's not implicit!
+  export CDPATH=".:$SRC_DIR:$MYSRC_DIR:$WORK_DIR:$HOME:$_3RDPARTY_DIR:$ICLOUD_DIR/Documents"
+}
+
+#-------------------------------------------------------------
+# Set some environment variables (the ones with "export") and
+# some variables used in my aliases and functions.
+#-------------------------------------------------------------
+personalized_set_variables() {
+  # I like to keep my history in a git repository because I've had too many instances where somehow my
+  # entire bash history file gets cleared, and I search my history a lot.
+  # Note: if you do so, make sure you set the repo to private, because your history may contain passwords or other
+  # secrets.
+  # In fact I wrote a tool to scrub and compact my history before committing it:
+  # https://github.com/jafischer/history-shrinker
+  if [[ -d "$HOME/mysrc/shell-history" ]]; then
+    HISTFILE="$HOME/mysrc/shell-history/history-$(my_os)"
+    is_zsh && HISTFILE="$HOME/mysrc/shell-history/history-zsh-$(my_os)"
+  fi
+
+  # On Windows, your iCloud directory is ~/iCloudDrive; on the Mac it's in a far more awkward path,
+  # so I create a symlink in my home directory.
+  if [[ -d "$HOME/Library/Mobile Documents/com~apple~CloudDocs" ]]; then
+    if ! [[ -e $HOME/iCloudDrive ]]; then
+      ln -s "$HOME/Library/Mobile Documents/com~apple~CloudDocs" "$HOME/iCloudDrive"
+    fi
+  fi
+
+  # When you download and install the "Corretto" version of java, it installs into
+  # /Library/Java/JavaVirtualMachines/amazon-corretto-NN.jdk, so I make a symlink
+  # called "current" to whatever version of the JDK I'm using
+  # (see the "jdk" function in ./functions).
+  [[ -d /Library/Java/JavaVirtualMachines/current/Contents/Home ]] &&
+    export JAVA_HOME=/Library/Java/JavaVirtualMachines/current/Contents/Home
+
+  [[ -d ~/go/go1.21.5 ]] && export GOROOT=~/go/go1.21.5
+}
+
+
+# This function is called by choosedir(). It's a place to put any cd shortcuts you may wish to define.
+personalized_choosedir() {
+  local dir="$1"
+  case $dir in
+    xx)   echo "$SRC_DIR/some-directory"; return 0 ;;
+    etc)  echo "etc..."; return 0 ;;
+  esac
+
+  return 1
+}
+
+# Add anything else here
+personalized_finish_up() {
+  echo > /dev/null
+}
+
+##### You can also define personalized functions and aliases here, that you may not want to put in the git repo
+
+# alias something_secret='echo my_password | mysql yada yada'
