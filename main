@@ -256,6 +256,8 @@ rc_finish_up() {
   # Miscellaneous
   #-------------------------------------------------------------
 
+  personalized_finish_up
+
   # Just in case I ever forget after adding a new file under .ssh:
   # All files in those directories should be only readable by me.
   chmod -R og-rwx ~/.ssh
