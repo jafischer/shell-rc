@@ -150,15 +150,23 @@ log_stdout() {
 }
 
 log_heading() {
-  local heading="$1" extra="" ruler
+  local heading="$1" stripped_heading num_lines extra="" ruler
   # Use ${2+x} to avoid "$2: unbound variable" error in case we're using "set -u".
   [[ -n "${2+x}" ]] && extra="$2"
   # Strip ansi color codes out of the message when creating the ruler
-  ruler=$(echo -n "$heading" | sed -e 's/\\x1b\[[0-9;]*m//g' | sed -e 's/./=/g')
+  stripped_heading=$(echo -n "$heading" | sed -e 's/\\x1b\[[0-9;]*m//g')
+  num_lines=$(echo -e "$extra" | wc -l | sed -e 's/ *//')
+  ruler=$(echo -n "$stripped_heading" | sed -e 's/./=/g')
 
-  echo -e "${CYAN}+=${ruler}=+$NC" 1>&2
-  echo -e "${CYAN}| $heading |    $extra$NC" 1>&2
-  echo -e "${CYAN}+=${ruler}=+$NC" 1>&2
+  echo -e "${CYAN}+==${ruler}==+$NC" 1>&2
+
+  for ((i = 1; i <= num_lines; ++i)); do
+    # macOS bash does not have array variables, so this gets tricky
+    echo -e "${CYAN}|  $heading  |  $(echo -e "$extra" | sed -n "${i}p")$NC" 1>&2
+    heading=${heading//?/ }
+  done
+
+  echo -e "${CYAN}+==${ruler}==+$NC" 1>&2
 }
 
 log_error() {
