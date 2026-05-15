@@ -547,10 +547,14 @@ git-delete-stale-branches() {
 
 # Switch to main branch and pull. Useful after merging a PR.
 gmain() {
-  local default_branch
+  local default_branch is_clean=false
   default_branch=$(git remote show origin | sed -n '/HEAD branch/s/.*: //p') || return 1
 
-  git checkout "$default_branch"
-  gpull
+  [[ -z "$(git status --short --porcelain)" ]] && is_clean=true
+
+  $is_clean || git stash         || return 1
+  git checkout "$default_branch" || return 1
+  gpull                          || return 1
+  $is_clean || git stash pop     || return 1
   git-delete-stale-branches
 }
