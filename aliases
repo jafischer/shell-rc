@@ -1,3 +1,7 @@
+#
+# Aliases: simple command substitutions.
+#
+
 # Command to reload everything here file after I make changes.
 # shellcheck disable=SC2139
 alias reload="source $STARTUP_DIR/main"
@@ -151,7 +155,7 @@ alias od-char='od -c'
 alias od-hex='od -t x1'
 alias od-hexword='od -x'
 
-if is_wsl; then
+if ! is_mac; then
   # GNU date is the default on Linux.
   alias gdate=date
 fi

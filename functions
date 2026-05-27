@@ -1,3 +1,7 @@
+#
+# Functions: when you need something a bit more complex than an alias (e.g. you want to process parameters).
+#
+
 # Determine if a path is absolute or relative
 is_absolute_path() {
   local p="$1"

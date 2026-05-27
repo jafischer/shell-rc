@@ -20,7 +20,7 @@ time ensuring everything here also works in zsh. But after that initial effort,
 I've switched back to bash, so it's possible that later updates may break
 something in zsh.
 
-## Feel Free to Use This!
+## Feel Free to Use This
 
 You can git clone (or fork) this repo, and add a similar `source` statement
 to your own shell startup file.
