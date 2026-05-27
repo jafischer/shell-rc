@@ -550,7 +550,8 @@ gmain() {
   local default_branch is_clean=false
   default_branch=$(git remote show origin | sed -n '/HEAD branch/s/.*: //p') || return 1
 
-  [[ -z "$(git status --short --porcelain)" ]] && is_clean=true
+  # shellcheck disable=SC2143
+  [[ -z "$(git status --short --porcelain | grep -v '^\?\?')" ]] && is_clean=true
 
   $is_clean || git stash         || return 1
   git checkout "$default_branch" || return 1
