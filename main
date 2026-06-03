@@ -196,7 +196,7 @@ rc_setup_prompt() {
   # Or for zsh:
   # https://zsh.sourceforge.io/Doc/Release/Prompt-Expansion.html#Prompt-Expansion
 
-  if [[ "$TERM_PROGRAM" == "Apple_Terminal" ]] || is_wsl; then
+  if [[ -n "$TERM_PROGRAM" ]] || is_wsl; then
     ps1_branch() {
       git branch --show-current 2>&1 | sed -e "s|fatal:.*|N/A|"
     }
