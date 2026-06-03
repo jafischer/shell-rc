@@ -471,7 +471,11 @@ meldhead() {
 
 # URL-encode the arguments
 urlencode() {
-  echo_no_newline "$@"| jq -sRr '@uri'
+  echo_no_newline "$@" | jq -sRr '@uri'
+}
+
+urldecode() {
+  echo_no_newline "$@" | python3 -c "import sys; from urllib.parse import unquote; print(unquote(sys.stdin.read()));"
 }
 
 # Sound a bell (useful when running a long command and you want to know when it's finished).
@@ -555,11 +559,17 @@ gmain() {
   default_branch=$(git remote show origin | sed -n '/HEAD branch/s/.*: //p') || return 1
 
   # shellcheck disable=SC2143
-  [[ -z "$(git status --short --porcelain | grep -v '^\?\?')" ]] && is_clean=true
+  [[ -z "$(git status --short --porcelain | grep -v '^[?]')" ]] && is_clean=true
 
-  $is_clean || git stash         || return 1
+  if ! $is_clean; then
+    log "Stashing changes..."
+    git stash         || return 1
+  fi
   git checkout "$default_branch" || return 1
   gpull                          || return 1
-  $is_clean || git stash pop     || return 1
+  if ! $is_clean; then
+    log "Popping stash..."
+    git stash pop     || return 1
+  fi
   git-delete-stale-branches
 }
