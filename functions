@@ -565,8 +565,10 @@ gmain() {
     log "Stashing changes..."
     git stash         || return 1
   fi
+
   git checkout "$default_branch" || return 1
   gpull                          || return 1
+
   if ! $is_clean; then
     log "Popping stash..."
     git stash pop     || return 1

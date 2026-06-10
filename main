@@ -108,6 +108,9 @@ rc_shell_settings() {
     # Case-insensitive wildcards
     unsetopt CASE_GLOB
 
+    # Tab completion for the "cd" and "pushd" commands should favor directories.
+    complete -o nospace -d cd pushd
+
   elif is_bash; then
     # Bash version 4+ supports recursive wildcards, e.g. **/*.txt
     [[ $BASH_VERSION == 3* ]] || shopt -s globstar
@@ -196,7 +199,7 @@ rc_setup_prompt() {
   # Or for zsh:
   # https://zsh.sourceforge.io/Doc/Release/Prompt-Expansion.html#Prompt-Expansion
 
-  if [[ -n "$TERM_PROGRAM" ]] || is_wsl; then
+#  if [[ -n "$TERM_PROGRAM" ]] || is_wsl; then
     ps1_branch() {
       git branch --show-current 2>&1 | sed -e "s|fatal:.*|N/A|"
     }
@@ -228,7 +231,7 @@ rc_setup_prompt() {
     else
       PS1=$PS1_dir$PS1_branch$PS1_ns$'\n'$PS1_timestamp' \$ '
     fi
-  fi
+#  fi
 }
 
 rc_fix_prompt_codes() {
