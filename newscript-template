@@ -125,6 +125,18 @@ get_platform() {
   fi
 }
 
+# Convenient wrappers for selecting the nth word of output.
+awk1() { awk '{print $1}'; }
+awk2() { awk '{print $2}'; }
+awk3() { awk '{print $3}'; }
+awk4() { awk '{print $4}'; }
+awk5() { awk '{print $5}'; }
+awk6() { awk '{print $6}'; }
+awk7() { awk '{print $7}'; }
+awk8() { awk '{print $8}'; }
+awk9() { awk '{print $9}'; }
+awklast() { awk '{print $NF}'; }
+
 # gdate is gnu date, which supports sub-second resolution
 # Install it via `brew install gdate`
 if command -v gdate >/dev/null; then
@@ -163,7 +175,7 @@ log_heading() {
 
   for ((i = 1; i <= num_lines; ++i)); do
     # macOS bash does not have array variables, so this gets tricky
-    echo -e "${CYAN}|  $heading  |  $(echo -e "$extra" | sed -n "${i}p")$NC" 1>&2
+    echo -e "${CYAN}|  $heading  $CYAN|  $(echo -e "$extra" | sed -n "${i}p")$NC" 1>&2
     heading=${heading//?/ }
   done
 
