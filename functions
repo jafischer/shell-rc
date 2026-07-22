@@ -565,6 +565,22 @@ git-delete-stale-branches() {
   fi
 }
 
+# Fetch, pull, prune, and update main branch
+gpull() {
+  local current_branch default_branch
+  current_branch=$(git symbolic-ref --short HEAD) || return 1
+  default_branch=$(git remote show origin | sed -n '/HEAD branch/s/.*: //p') || return 1
+
+  git fetch --prune || return 1
+  git pull || return 1
+
+  # If not in main, update it as well.
+  [[ "$current_branch" != "$default_branch" ]] &&
+    git update-ref "refs/heads/$default_branch" "refs/remotes/origin/$default_branch"
+
+  return 0
+}
+
 # Switch to main branch and pull. Useful after merging a PR.
 gmain() {
   local default_branch is_clean=false
