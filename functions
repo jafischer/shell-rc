@@ -521,8 +521,9 @@ new-script() {
 
   cp "$STARTUP_DIR/newscript-template" "$name"
   chmod +x "$name"
-  # + option means go to last line
-  vi + "$name"
+
+  # +n option means go to nth line
+  vi +7 "$name"
 }
 
 if is_installed yq; then
