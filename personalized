@@ -57,7 +57,7 @@ personalized_set_path() {
 
   # Paths for the cd command to search.
   # Note: CDPATH must include "." -- it's not implicit!
-  export CDPATH=".:$SRC_DIR:$MYSRC_DIR:$WORK_DIR:$HOME:$_3RDPARTY_DIR:$ICLOUD_DIR/Documents"
+  CDPATH=".:$SRC_DIR:$MYSRC_DIR:$WORK_DIR:$HOME:$_3RDPARTY_DIR"
 }
 
 #-------------------------------------------------------------
