@@ -604,3 +604,13 @@ gmain() {
   fi
   git-delete-stale-branches
 }
+
+newbranch() {
+  local extra="$*" branch
+  [[ -n "$extra" ]] && extra="-$extra"
+
+  branch="$USER/$(date +'%Y.%m.%d')$extra"
+
+  git branch "$branch" &&
+    git checkout "$branch"
+}
